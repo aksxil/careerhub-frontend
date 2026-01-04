@@ -14,13 +14,19 @@ import FilteredJobsAndInternships from "../studentdash/Filtered";
 const Student = () => {
   const dispatch = useDispatch();
 
-  const { isAuthenticated, user, randomJobs, randomInternships } =
-    useSelector((state) => state.user);
+  const {
+    isAuthenticated,
+    user,
+    randomJobs,
+    randomInternships,
+    isLoading,
+  } = useSelector((state) => state.user);
 
+  // ✅ Load user + jobs + internships
   useEffect(() => {
     dispatch(asyncloaduser());
-    if (!randomJobs?.data) dispatch(fetchRandomJobs());
-    if (!randomInternships?.data) dispatch(fetchRandomInternships());
+    dispatch(fetchRandomJobs());
+    dispatch(fetchRandomInternships());
   }, [dispatch]);
 
   if (!isAuthenticated) {
@@ -40,7 +46,7 @@ const Student = () => {
     <div className="bg-gray-50 min-h-screen">
       <Navbar />
 
-      {/* WELCOME SECTION */}
+      {/* WELCOME */}
       <section className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-14">
         <div className="max-w-7xl mx-auto px-6 text-center">
           <h1 className="text-4xl font-bold">
@@ -52,21 +58,26 @@ const Student = () => {
         </div>
       </section>
 
-      {/* FILTER SECTION */}
+      {/* FILTER */}
       <section className="max-w-7xl mx-auto px-6 mt-8">
         <FilteredJobsAndInternships />
       </section>
 
-      {/* RECOMMENDED JOBS */}
+      {/* JOBS */}
       <section className="max-w-7xl mx-auto px-6 mt-12">
-        <div className="text-center">
-          <h2 className="text-3xl font-semibold">
-            Recommended for you
-          </h2>
-          <p className="text-gray-600 mt-1">
-            Based on your <span className="text-indigo-600 font-medium">preferences</span>
+        <h2 className="text-3xl font-semibold text-center">
+          Recommended Jobs
+        </h2>
+
+        {isLoading && (
+          <p className="text-center mt-6 text-gray-500">Loading jobs...</p>
+        )}
+
+        {!isLoading && randomJobs?.data?.length === 0 && (
+          <p className="text-center mt-6 text-gray-500">
+            No jobs found
           </p>
-        </div>
+        )}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-10">
           {randomJobs?.data?.map((job) => (
@@ -77,14 +88,21 @@ const Student = () => {
 
       {/* INTERNSHIPS */}
       <section className="max-w-7xl mx-auto px-6 mt-16 pb-16">
-        <div className="text-center">
-          <h2 className="text-3xl font-semibold">
-            Trending Internships
-          </h2>
-          <p className="text-gray-600 mt-1">
-            Gain experience with top companies
+        <h2 className="text-3xl font-semibold text-center">
+          Trending Internships
+        </h2>
+
+        {isLoading && (
+          <p className="text-center mt-6 text-gray-500">
+            Loading internships...
           </p>
-        </div>
+        )}
+
+        {!isLoading && randomInternships?.data?.length === 0 && (
+          <p className="text-center mt-6 text-gray-500">
+            No internships found
+          </p>
+        )}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-10">
           {randomInternships?.data?.map((internship) => (
