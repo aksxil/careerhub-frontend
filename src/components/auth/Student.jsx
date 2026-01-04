@@ -23,11 +23,18 @@ const Student = () => {
   } = useSelector((state) => state.user);
 
   // ✅ Load user + jobs + internships
-  useEffect(() => {
-    dispatch(asyncloaduser());
+useEffect(() => {
+  dispatch(asyncloaduser());
+
+  if (!randomJobs?.data || randomJobs.data.length === 0) {
     dispatch(fetchRandomJobs());
+  }
+
+  if (!randomInternships?.data || randomInternships.data.length === 0) {
     dispatch(fetchRandomInternships());
-  }, [dispatch]);
+  }
+}, [dispatch, randomJobs?.data, randomInternships?.data]);
+
 
   if (!isAuthenticated) {
     return (
