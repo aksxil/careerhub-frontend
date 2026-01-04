@@ -21,11 +21,22 @@ const Student = () => {
     randomInternships,
   } = useSelector((state) => state.user);
 
+  // 1️⃣ Load user ONCE
   useEffect(() => {
     dispatch(asyncloaduser());
-    dispatch(fetchRandomJobs());
-    dispatch(fetchRandomInternships());
   }, [dispatch]);
+
+  // 2️⃣ Fetch jobs & internships ONLY after login
+  useEffect(() => {
+    if (isAuthenticated) {
+      if (!randomJobs.length) {
+        dispatch(fetchRandomJobs());
+      }
+      if (!randomInternships.length) {
+        dispatch(fetchRandomInternships());
+      }
+    }
+  }, [dispatch, isAuthenticated]);
 
   if (!isAuthenticated) {
     return (
@@ -67,12 +78,17 @@ const Student = () => {
           Recommended Jobs
         </h2>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-10">
-          {Array.isArray(randomJobs) &&
-            randomJobs.map((job) => (
+        {randomJobs.length === 0 ? (
+          <p className="text-center text-gray-500 mt-8">
+            No jobs available right now
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-10">
+            {randomJobs.map((job) => (
               <JobCard key={job._id} job={job} />
             ))}
-        </div>
+          </div>
+        )}
       </section>
 
       {/* INTERNSHIPS */}
@@ -81,15 +97,20 @@ const Student = () => {
           Trending Internships
         </h2>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-10">
-          {Array.isArray(randomInternships) &&
-            randomInternships.map((internship) => (
+        {randomInternships.length === 0 ? (
+          <p className="text-center text-gray-500 mt-8">
+            No internships available right now
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-10">
+            {randomInternships.map((internship) => (
               <InternCard
                 key={internship._id}
                 internship={internship}
               />
             ))}
-        </div>
+          </div>
+        )}
       </section>
     </div>
   );
