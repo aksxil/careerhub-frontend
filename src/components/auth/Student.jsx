@@ -19,22 +19,13 @@ const Student = () => {
     user,
     randomJobs,
     randomInternships,
-    isLoading,
   } = useSelector((state) => state.user);
 
-  // ✅ Load user + jobs + internships
-useEffect(() => {
-  dispatch(asyncloaduser());
-
-  if (!randomJobs?.data || randomJobs.data.length === 0) {
+  useEffect(() => {
+    dispatch(asyncloaduser());
     dispatch(fetchRandomJobs());
-  }
-
-  if (!randomInternships?.data || randomInternships.data.length === 0) {
     dispatch(fetchRandomInternships());
-  }
-}, [dispatch, randomJobs?.data, randomInternships?.data]);
-
+  }, [dispatch]);
 
   if (!isAuthenticated) {
     return (
@@ -76,20 +67,11 @@ useEffect(() => {
           Recommended Jobs
         </h2>
 
-        {isLoading && (
-          <p className="text-center mt-6 text-gray-500">Loading jobs...</p>
-        )}
-
-        {!isLoading && randomJobs?.data?.length === 0 && (
-          <p className="text-center mt-6 text-gray-500">
-            No jobs found
-          </p>
-        )}
-
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-10">
-          {randomJobs?.data?.map((job) => (
-            <JobCard key={job._id} job={job} />
-          ))}
+          {Array.isArray(randomJobs) &&
+            randomJobs.map((job) => (
+              <JobCard key={job._id} job={job} />
+            ))}
         </div>
       </section>
 
@@ -99,25 +81,14 @@ useEffect(() => {
           Trending Internships
         </h2>
 
-        {isLoading && (
-          <p className="text-center mt-6 text-gray-500">
-            Loading internships...
-          </p>
-        )}
-
-        {!isLoading && randomInternships?.data?.length === 0 && (
-          <p className="text-center mt-6 text-gray-500">
-            No internships found
-          </p>
-        )}
-
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-10">
-          {randomInternships?.data?.map((internship) => (
-            <InternCard
-              key={internship._id}
-              internship={internship}
-            />
-          ))}
+          {Array.isArray(randomInternships) &&
+            randomInternships.map((internship) => (
+              <InternCard
+                key={internship._id}
+                internship={internship}
+              />
+            ))}
         </div>
       </section>
     </div>
