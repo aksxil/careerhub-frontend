@@ -1,5 +1,5 @@
 import axios from "../axios";
-import { loaduser, errors, signout , loadJobDetails, loadInternshipDetails, loadRandomInternships, loadRandomJobs, loadStudentDetails, updateInternshipDetails, updateJobDetails, setJobDetails,setLoading, setError, clearError, fetchSavedJobsSuccess, fetchSavedInternshipsSuccess, removeSavedItem} from "./userSlice";
+import { loaduser, signout , loadJobDetails, loadInternshipDetails, loadRandomInternships, loadRandomJobs, loadStudentDetails, updateInternshipDetails, updateJobDetails, setJobDetails,setLoading, setError, clearError, fetchSavedJobsSuccess, fetchSavedInternshipsSuccess, removeSavedItem} from "./userSlice";
 import {
   forgotPasswordRequest,
   forgotPasswordSuccess,
@@ -12,7 +12,7 @@ const loadUserDetails = () => async (dispatch) => {
     const { data } = await axios.get('/student');
     dispatch(loaduser(data.student));
   } catch (err) {
-    dispatch(errors(err.response.data.message));
+    dispatch(setError(err.response.data.message));
   }
 };
 const loadEmployeDetails = () => async (dispatch) => {
@@ -20,7 +20,7 @@ const loadEmployeDetails = () => async (dispatch) => {
     const { data } = await axios.post('/employe/current');
     dispatch(loaduser(data.employe));
   } catch (err) {
-    dispatch(errors(err.response.data.message));
+    dispatch(setError(err.response.data.message));
   }
 };
 // export const asyncsignup = (newuser) => async (dispatch) => {
@@ -28,7 +28,7 @@ const loadEmployeDetails = () => async (dispatch) => {
 //     const { data } = await axios.post("/student/signup", newuser);
 //     dispatch(loaduser(data.user));
 //   } catch (err) {
-//     dispatch(errors(err.response.data.message));
+//     dispatch(setError(err.response.data.message));
 //   }
 // };
 
@@ -39,10 +39,10 @@ export const asyncsignup = (newuser) => async (dispatch) => {
   } catch (err) {
     // If there's an error response from the server, dispatch the error message
     if (err.response && err.response.data && err.response.data.message) {
-      dispatch(errors(err.response.data.message));
+      dispatch(setError(err.response.data.message));
     } else {
       // If there's no error message in the response, dispatch a generic error
-      dispatch(errors("An error occurred during signup."));
+      dispatch(setError("An error occurred during signup."));
     }
   }
 };
@@ -51,7 +51,7 @@ export const asyncsignup = (newuser) => async (dispatch) => {
 //     const { data } = await axios.post("/employe/signup", newuser);
 //     dispatch(loaduser(data.user));
 //   } catch (err) {
-//     dispatch(errors(err.response.data.message));
+//     dispatch(setError(err.response.data.message));
 //   }
 // };
 
@@ -62,10 +62,10 @@ export const asyncempsignup = (newuser) => async (dispatch) => {
   } catch (err) {
     // If there's an error response from the server, dispatch the error message
     if (err.response && err.response.data && err.response.data.message) {
-      dispatch(errors(err.response.data.message));
+      dispatch(setError(err.response.data.message));
     } else {
       // If there's no error message in the response, dispatch a generic error
-      dispatch(errors("An error occurred during signup."));
+      dispatch(setError("An error occurred during signup."));
     }
   }
 };
@@ -75,7 +75,7 @@ export const asyncempsignin = (newuser) => async (dispatch) => {
     dispatch(loaduser(data.employe));
     console.log(data.employe)
   } catch (err) {
-    dispatch(errors(err.response.data.message));
+    dispatch(setError(err.response.data.message));
   }
 };
 
@@ -84,7 +84,7 @@ export const asyncsignin = (newuser) => async (dispatch) => {
     const { data } = await axios.post("/student/signin", newuser, { withCredentials: true });
     dispatch(loaduser(data.user));
   } catch (err) {
-    dispatch(errors(err.response.data.message));
+    dispatch(setError(err.response.data.message));
   }
 };
 
@@ -99,7 +99,7 @@ export const asyncsignout = () => async (dispatch) => {
     await axios.get("/student/signout");
     dispatch(signout());
   } catch (err) {
-    dispatch(errors(err.response.data.message));
+    dispatch(setError(err.response.data.message));
   }
 };
 
@@ -109,7 +109,7 @@ export const updateUserDetails = (id, updatedUserData) => async (dispatch) => {
     // dispatch(loaduser(response.data.user));
     dispatch(asyncloaduser(response.data.user));
   } catch (err) {
-    dispatch(errors(err.response.data.message));
+    dispatch(setError(err.response.data.message));
   }
 };
 export const updateEmployeDetails = (id, updatedUserData) => async (dispatch) => {
@@ -118,7 +118,7 @@ export const updateEmployeDetails = (id, updatedUserData) => async (dispatch) =>
     // dispatch(loaduser(response.data.user));
     dispatch(asyncloademploye(response.data.employe));
   } catch (err) {
-    dispatch(errors(err.response.data.message));
+    dispatch(setError(err.response.data.message));
   }
 };
 
@@ -129,7 +129,7 @@ export const uploadAvatar = (userId, formData) => async (dispatch) => {
     // dispatch(loaduser(response.data.user));
     dispatch(asyncloaduser(response.data.user));
   } catch (err) {
-    dispatch(errors(err.response.data.message));
+    dispatch(setError(err.response.data.message));
     throw err;
   }
 };
@@ -139,7 +139,7 @@ export const uploadOrganizationLogo = (userId, formData) => async (dispatch) => 
     // dispatch(loaduser(response.data.user));
     dispatch(asyncloademploye(response.data.employe));
   } catch (err) {
-    dispatch(errors(err.response.data.message));
+    dispatch(setError(err.response.data.message));
     throw err;
   }
 };
@@ -175,7 +175,7 @@ export const addEducation = (educationData) => async (dispatch) => {
     await axios.post('/resume/add-edu', educationData,{ withCredentials: true});
     dispatch(asyncloaduser());
   } catch (error) {
-    dispatch(errors(error.response.data.message));
+    dispatch(setError(error.response.data.message));
     throw error;
   }
 };
@@ -188,7 +188,7 @@ export const deleteEducation = (educationId) => async (dispatch) => {
     dispatch(asyncloaduser());
   } catch (error) {
     // If there's an error, dispatch an action to set the error message
-    dispatch(errors(error.response.data.message));
+    dispatch(setError(error.response.data.message));
     throw error; // Rethrow the error to handle it where the action is dispatched
   }
 };
@@ -202,7 +202,7 @@ export const updateEducation = (educationData) => async (dispatch) => {
     dispatch(asyncloaduser(response.data.user));
   } catch (error) {
     // Dispatch an error action if the request fails
-    dispatch(errors(error.response.data.message));
+    dispatch(setError(error.response.data.message));
     throw error; // Rethrow the error to handle it where the action is dispatched
   }
 };
@@ -213,7 +213,7 @@ export const addInternship = (formData) => async (dispatch) => {
     await axios.post('/resume/add-intern', formData, { withCredentials: true });
     dispatch(asyncloaduser());
   } catch (error) {
-    dispatch(errors(error.response.data.message));
+    dispatch(setError(error.response.data.message));
     throw error;
   }
 };
@@ -223,7 +223,7 @@ export const deleteInternship = (internshipId) => async (dispatch) => {
     await axios.post(`/resume/delete-intern/${internshipId}`);
     dispatch(asyncloaduser());
   } catch (error) {
-    dispatch(errors(error.response.data.message));
+    dispatch(setError(error.response.data.message));
     throw error;
   }
 };
@@ -233,7 +233,7 @@ export const updateInternship = (id,internshipData) => async (dispatch) => {
     const response = await axios.post(`/resume/edit-intern/${id}`, internshipData);
     dispatch(asyncloaduser(response.data.user));
   } catch (error) {
-    dispatch(errors(error.response.data.message));
+    dispatch(setError(error.response.data.message));
     throw error;
   }
 };
@@ -242,7 +242,7 @@ export const addJob = (formData) => async (dispatch) => {
     await axios.post('/resume/add-job', formData, { withCredentials: true });
     dispatch(asyncloaduser());
   } catch (error) {
-    dispatch(errors(error.response.data.message));
+    dispatch(setError(error.response.data.message));
     throw error;
   }
 };
@@ -251,7 +251,7 @@ export const deleteJob = (jobId) => async (dispatch) => {
     await axios.post(`/resume/delete-job/${jobId}`);
     dispatch(asyncloaduser());
   } catch (error) {
-    dispatch(errors(error.response.data.message));
+    dispatch(setError(error.response.data.message));
     throw error;
   }
 };
@@ -260,7 +260,7 @@ export const updateJob = (jobId, jobData) => async (dispatch) => {
     const response = await axios.post(`/resume/edit-job/${jobId}`, jobData); 
     dispatch(asyncloaduser(response.data.user));
   } catch (error) {
-    dispatch(errors(error.response.data.message));
+    dispatch(setError(error.response.data.message));
     throw error;
   }
 };
@@ -269,7 +269,7 @@ export const addResponsibility = (formData) => async (dispatch) => {
     await axios.post('/resume/add-resp', formData, { withCredentials: true });
     dispatch(asyncloaduser());
   } catch (error) {
-    dispatch(errors(error.response.data.message));
+    dispatch(setError(error.response.data.message));
     throw error;
   }
 };
@@ -278,7 +278,7 @@ export const deleteRespo = (respoId) => async (dispatch) => {
     await axios.post(`/resume/delete-resp/${respoId}`);
     dispatch(asyncloaduser());
   } catch (error) {
-    dispatch(errors(error.response.data.message));
+    dispatch(setError(error.response.data.message));
     throw error;
   }
 };
@@ -288,7 +288,7 @@ export const updateRespo = (respoId, respoData) => async (dispatch) => {
     const response = await axios.post(`/resume/edit-resp/${respoId}`, respoData); 
     dispatch(asyncloaduser(response.data.user));
   } catch (error) {
-    dispatch(errors(error.response.data.message));
+    dispatch(setError(error.response.data.message));
     throw error;
   }
 };
@@ -298,7 +298,7 @@ export const addTraining = (formData) => async (dispatch) => {
     await axios.post('/resume/add-course', formData, { withCredentials: true });
     dispatch(asyncloaduser());
   } catch (error) {
-    dispatch(errors(error.response.data.message));
+    dispatch(setError(error.response.data.message));
     throw error;
   }
 };
@@ -308,7 +308,7 @@ export const deleteTraining = (trainingId) => async (dispatch) => {
     await axios.post(`/resume/delete-course/${trainingId}`);
     dispatch(asyncloaduser());
   } catch (error) {
-    dispatch(errors(error.response.data.message));
+    dispatch(setError(error.response.data.message));
     throw error;
   }
 };
@@ -318,7 +318,7 @@ export const updateTraing = (trainingId, trainingData) => async (dispatch) => {
     const response = await axios.post(`/resume/edit-course/${trainingId}`, trainingData); 
     dispatch(asyncloaduser(response.data.user));
   } catch (error) {
-    dispatch(errors(error.response.data.message));
+    dispatch(setError(error.response.data.message));
     throw error;
   }
 };
@@ -329,7 +329,7 @@ export const addProject = (formData) => async (dispatch) => {
     await axios.post('/resume/add-project', formData, { withCredentials: true });
     dispatch(asyncloaduser());
   } catch (error) {
-    dispatch(errors(error.response.data.message));
+    dispatch(setError(error.response.data.message));
     throw error;
   }
 };
@@ -339,7 +339,7 @@ export const deleteProject = (projectId) => async (dispatch) => {
     await axios.post(`/resume/delete-project/${projectId}`);
     dispatch(asyncloaduser());
   } catch (error) {
-    dispatch(errors(error.response.data.message));
+    dispatch(setError(error.response.data.message));
     throw error;
   }
 };
@@ -349,7 +349,7 @@ export const updateProject = (projectId, projectData) => async (dispatch) => {
     const response = await axios.post(`/resume/edit-project/${projectId}`, projectData); 
     dispatch(asyncloaduser(response.data.user));
   } catch (error) {
-    dispatch(errors(error.response.data.message));
+    dispatch(setError(error.response.data.message));
     throw error;
   }
 };
@@ -359,7 +359,7 @@ export const addSkill = (formData) => async (dispatch) => {
     await axios.post('/resume/add-skill', formData, { withCredentials: true });
     dispatch(asyncloaduser());
   } catch (error) {
-    dispatch(errors(error.response.data.message));
+    dispatch(setError(error.response.data.message));
     throw error;
   }
 };
@@ -369,7 +369,7 @@ export const deleteSkill = (skillId) => async (dispatch) => {
     await axios.post(`/resume/delete-skill/${skillId}`);
     dispatch(asyncloaduser());
   } catch (error) {
-    dispatch(errors(error.response.data.message));
+    dispatch(setError(error.response.data.message));
     throw error;
   }
 };
@@ -379,7 +379,7 @@ export const updateSkill = (skillId, skillData) => async (dispatch) => {
     const response = await axios.post(`/resume/edit-skill/${skillId}`, skillData); 
     dispatch(asyncloaduser(response.data.user));
   } catch (error) {
-    dispatch(errors(error.response.data.message));
+    dispatch(setError(error.response.data.message));
     throw error;
   }
 };
@@ -389,7 +389,7 @@ export const addPortfolio = (formData) => async (dispatch) => {
     await axios.post('/resume/add-portfolio', formData, { withCredentials: true });
     dispatch(asyncloaduser());
   } catch (error) {
-    dispatch(errors(error.response.data.message));
+    dispatch(setError(error.response.data.message));
     throw error;
   }
 };
@@ -399,7 +399,7 @@ export const updatePortfolio = (portfolioData) => async (dispatch) => {
     const response = await axios.post('/resume/edit-portfolio', portfolioData); 
     dispatch(asyncloaduser(response.data.user));
   } catch (error) {
-    dispatch(errors(error.response.data.message));
+    dispatch(setError(error.response.data.message));
     throw error;
   }
 };
@@ -409,7 +409,7 @@ export const addAccom = (formData) => async (dispatch) => {
     await axios.post('/resume/add-accomplishment', formData, { withCredentials: true });
     dispatch(asyncloaduser());
   } catch (error) {
-    dispatch(errors(error.response.data.message));
+    dispatch(setError(error.response.data.message));
     throw error;
   }
 };
@@ -419,7 +419,7 @@ export const deleteAccom = (accomId) => async (dispatch) => {
     await axios.post(`/resume/delete-accomplishment/${accomId}`);
     dispatch(asyncloaduser());
   } catch (error) {
-    dispatch(errors(error.response.data.message));
+    dispatch(setError(error.response.data.message));
     throw error;
   }
 };
@@ -429,7 +429,7 @@ export const updateAccom = (accomId, accomData) => async (dispatch) => {
     const response = await axios.post(`/resume/edit-accomplishment/${accomId}`, accomData); 
     dispatch(asyncloaduser(response.data.user));
   } catch (error) {
-    dispatch(errors(error.response.data.message));
+    dispatch(setError(error.response.data.message));
     throw error;
   }
 };
@@ -439,7 +439,7 @@ export const updateAccom = (accomId, accomData) => async (dispatch) => {
 //     await axios.post('/employe/job/create', formData, { withCredentials: true });
 //     dispatch(asyncloademploye());
 //   } catch (error) {
-//     dispatch(errors(error.response.data.message));
+//     dispatch(setError(error.response.data.message));
 //     throw error;
 //   }
 // };
@@ -448,7 +448,7 @@ export const addJobPost = (jobData) => async (dispatch)=> {
     const res = await axios.post('/employe/job/create', jobData);
     dispatch(asyncloademploye());
   } catch (error) {
-    dispatch(errors(error.response.data.message));
+    dispatch(setError(error.response.data.message));
     throw error;
   }
 };
@@ -458,7 +458,7 @@ export const addInternshipPost = (internshipData) => async (dispatch)=> {
     const res = await axios.post('/employe/internship/create', internshipData);
     dispatch(asyncloademploye());
   } catch (error) {
-    dispatch(errors(error.response.data.message));
+    dispatch(setError(error.response.data.message));
     throw error;
   }
 };
@@ -530,7 +530,7 @@ export const deleteJobPost = (jobId, callback) => async (dispatch) => {
         callback();
     }
   } catch (error) {
-    dispatch(errors(error.response.data.message));
+    dispatch(setError(error.response.data.message));
     throw error;
   }
 };
@@ -543,7 +543,7 @@ export const updateInternshipPost = (internshipId, internshipData) => async (dis
     dispatch(asyncloademploye());
     dispatch(updateInternshipDetails())
   } catch (error) {
-    dispatch(errors(error.response.data.message));
+    dispatch(setError(error.response.data.message));
     throw error;
   }
 };
@@ -557,7 +557,7 @@ export const deleteInternshipPost = (internshipId, callback) => async (dispatch)
         callback();
     }
   } catch (error) {
-    dispatch(errors(error.response.data.message));
+    dispatch(setError(error.response.data.message));
     throw error;
   }
 };
@@ -570,7 +570,7 @@ export const fetchRandomJobs = () => async (dispatch) => {
     dispatch(loadRandomJobs(data)); // Dispatch action to load random jobs into Redux state
   } catch (error) {
     // Handle error
-    dispatch(errors(error.message));
+    dispatch(setError(error.message));
     console.error('Error fetching random jobs:', error);
   }
 };
@@ -581,7 +581,7 @@ export const fetchRandomInternships = () => async (dispatch) => {
     dispatch(loadRandomInternships(data)); // Dispatch action to load random internships into Redux state
   } catch (error) {
     // Handle error
-    dispatch(errors(error.message));
+    dispatch(setError(error.message));
     console.error('Error fetching random internships:', error);
   }
 };
@@ -638,7 +638,7 @@ export const fetchMyApplications = () => async (dispatch) => {
       dispatch(loadInternshipDetails({ internshipId: internship._id, internshipDetails: internship }));
     });
   } catch (error) {
-    dispatch(errors(error.response.data));
+    dispatch(setError(error.response.data));
   }
 };
 
