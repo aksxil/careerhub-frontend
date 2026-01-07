@@ -9,7 +9,7 @@ const Signin = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const { isAuthenticated, isLoading } = useSelector(
+  const { isAuthenticated, loading, error } = useSelector(
     (state) => state.user
   );
 
@@ -24,21 +24,23 @@ const Signin = () => {
 
   const submitHandler = async (e) => {
     e.preventDefault();
-
-    const res = await dispatch(asyncsignin(formData));
-
-    if (res?.error) {
-      toast.error(res.error.message || "Invalid email or password");
-    } else {
-      toast.success("Login successful");
-    }
+    dispatch(asyncsignin(formData));
   };
 
+  // ✅ REDIRECT AFTER LOGIN
   useEffect(() => {
     if (isAuthenticated) {
+      toast.success("Login successful");
       navigate("/student/dashboard");
     }
   }, [isAuthenticated, navigate]);
+
+  // ❌ ERROR HANDLING
+  useEffect(() => {
+    if (error) {
+      toast.error(error);
+    }
+  }, [error]);
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -74,10 +76,10 @@ const Signin = () => {
 
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={loading}
               className="bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 disabled:opacity-50"
             >
-              {isLoading ? "Logging in..." : "Login"}
+              {loading ? "Logging in..." : "Login"}
             </button>
 
             <p className="text-sm text-center text-gray-600">
@@ -96,7 +98,6 @@ const Signin = () => {
         </div>
       </div>
 
-      {/* INPUT STYLES */}
       <style>
         {`
           .input {

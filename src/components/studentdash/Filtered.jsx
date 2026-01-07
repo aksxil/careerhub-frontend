@@ -3,7 +3,6 @@ import { useDispatch, useSelector } from "react-redux";
 import JobCard from "../JobCard";
 import InternCard from "../InternCard";
 import {
-  asyncloaduser,
   fetchRandomInternships,
   fetchRandomJobs,
 } from "../../store/userActions";
@@ -18,15 +17,13 @@ const FilteredJobsAndInternships = () => {
   );
 
   useEffect(() => {
-    dispatch(asyncloaduser());
     dispatch(fetchRandomJobs());
     dispatch(fetchRandomInternships());
   }, [dispatch]);
 
-  const filterItems = (items) => {
-    if (!items?.data) return [];
-
-    return items.data.filter((item) => {
+  // ✅ FIXED FILTER FUNCTION
+  const filterItems = (items = []) => {
+    return items.filter((item) => {
       const locationMatches =
         !locationFilter ||
         item.jobtype?.toLowerCase() === locationFilter.toLowerCase() ||
@@ -80,7 +77,7 @@ const FilteredJobsAndInternships = () => {
         </div>
       </div>
 
-      {/* JOBS SECTION */}
+      {/* JOBS */}
       <section>
         <h2 className="text-2xl font-semibold mb-4">Jobs</h2>
 
@@ -97,7 +94,7 @@ const FilteredJobsAndInternships = () => {
         )}
       </section>
 
-      {/* INTERNSHIPS SECTION */}
+      {/* INTERNSHIPS */}
       <section className="mt-14">
         <h2 className="text-2xl font-semibold mb-4">Internships</h2>
 

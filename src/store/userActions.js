@@ -79,14 +79,24 @@ export const asyncempsignin = (newuser) => async (dispatch) => {
   }
 };
 
-export const asyncsignin = (newuser) => async (dispatch) => {
+export const asyncsignin = (formData) => async (dispatch) => {
   try {
-    const { data } = await axios.post("/student/signin", newuser, { withCredentials: true });
-    dispatch(loaduser(data.user));
-  } catch (err) {
-    dispatch(setError(err.response.data.message));
+    dispatch(setLoading(true));
+
+    await axios.post("/student/signin", formData, {
+      withCredentials: true,
+    });
+
+    // ✅ VERY IMPORTANT
+    await dispatch(asyncloaduser());
+
+    dispatch(setLoading(false));
+  } catch (error) {
+    dispatch(setLoading(false));
+    dispatch(setError(error.response?.data?.message || "Login failed"));
   }
 };
+
 
 export const asyncloaduser = () => async (dispatch) => {
   dispatch(loadUserDetails());

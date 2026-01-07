@@ -67,10 +67,10 @@ const Student = () => {
         </div>
       </section>
 
-      {/* FILTER */}
+       {/* FILTER */}
       <section className="max-w-7xl mx-auto px-6 mt-8">
         <FilteredJobsAndInternships />
-      </section>
+      </section> 
 
       {/* JOBS */}
       <section className="max-w-7xl mx-auto px-6 mt-12">
