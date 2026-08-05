@@ -34,16 +34,14 @@ const loadEmployeDetails = () => async (dispatch) => {
 
 export const asyncsignup = (newuser) => async (dispatch) => {
   try {
-    const {data} = await axios.post("/student/signup", newuser);
-    dispatch(loaduser(data.user)); // Dispatch action to update user state upon successful signup
+    await axios.post("/student/signup", newuser, {
+      withCredentials: true,
+    });
+
+    await dispatch(asyncloaduser());
+
   } catch (err) {
-    // If there's an error response from the server, dispatch the error message
-    if (err.response && err.response.data && err.response.data.message) {
-      dispatch(setError(err.response.data.message));
-    } else {
-      // If there's no error message in the response, dispatch a generic error
-      dispatch(setError("An error occurred during signup."));
-    }
+    dispatch(setError(err.response?.data?.message || "Signup failed"));
   }
 };
 // export const  = (newuser) => async (dispatch) => {
@@ -55,18 +53,30 @@ export const asyncsignup = (newuser) => async (dispatch) => {
 //   }
 // };
 
+// export const asyncempsignup = (newuser) => async (dispatch) => {
+//   try {
+//     const {data} = await axios.post("/employe/signup", newuser);
+//     dispatch(loaduser(data.user)); // Dispatch action to update user state upon successful signup
+//   } catch (err) {
+//     // If there's an error response from the server, dispatch the error message
+//     if (err.response && err.response.data && err.response.data.message) {
+//       dispatch(setError(err.response.data.message));
+//     } else {
+//       // If there's no error message in the response, dispatch a generic error
+//       dispatch(setError("An error occurred during signup."));
+//     }
+//   }
+// };
+
 export const asyncempsignup = (newuser) => async (dispatch) => {
   try {
-    const {data} = await axios.post("/employe/signup", newuser);
-    dispatch(loaduser(data.user)); // Dispatch action to update user state upon successful signup
+    await axios.post("/employe/signup", newuser, {
+      withCredentials: true,
+    });
+
+    await dispatch(asyncloademploye());
   } catch (err) {
-    // If there's an error response from the server, dispatch the error message
-    if (err.response && err.response.data && err.response.data.message) {
-      dispatch(setError(err.response.data.message));
-    } else {
-      // If there's no error message in the response, dispatch a generic error
-      dispatch(setError("An error occurred during signup."));
-    }
+    dispatch(setError(err.response?.data?.message || "Signup failed"));
   }
 };
 export const asyncempsignin = (newuser) => async (dispatch) => {
