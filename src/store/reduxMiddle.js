@@ -1,13 +1,7 @@
-// reduxMiddleware.js
-import axios from 'axios';
+import axios from "axios";
 
-const authMiddleware = store => next => action => {
-  const state = store.getState();
-  const token = state.user.token; // Replace with your actual state structure
-
-  if (token) {
-    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-  }
+const authMiddleware = () => (next) => (action) => {
+  axios.defaults.withCredentials = true;
 
   return next(action);
 };

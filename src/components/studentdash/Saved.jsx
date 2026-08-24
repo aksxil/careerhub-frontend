@@ -10,106 +10,267 @@ import { Link } from "react-router-dom";
 
 const SavedItemsPage = () => {
   const dispatch = useDispatch();
-  const { savedJobs, savedInternships, loading, error, user } =
-    useSelector((state) => state.user);
+
+  const {
+    savedJobs = [],
+    savedInternships = [],
+    loading,
+    error,
+    user,
+  } = useSelector((state) => state.user);
 
   const userId = user?._id;
 
+  // --------------------------------
+  // FETCH SAVED ITEMS
+  // --------------------------------
   useEffect(() => {
     if (userId) {
       dispatch(fetchSavedJobsAndInternships(userId));
     }
   }, [dispatch, userId]);
 
-  const handleRemove = (type, id) => {
-    dispatch(removeSavedItemAsync(userId, type, id));
-    toast.success("Removed from saved");
+  // --------------------------------
+  // REMOVE SAVED ITEM
+  // --------------------------------
+  const handleRemove = async (type, id) => {
+    if (!userId || !id) return;
+
+    try {
+      await dispatch(removeSavedItemAsync(userId, type, id));
+
+      toast.success(
+        type === "job"
+          ? "Job removed from saved"
+          : "Internship removed from saved"
+      );
+
+      // Refresh saved items
+      dispatch(fetchSavedJobsAndInternships(userId));
+    } catch (error) {
+      toast.error("Failed to remove saved item");
+    }
   };
 
+  // --------------------------------
+  // LOADING
+  // --------------------------------
   if (loading) {
     return (
-      <>
+      <div className="min-h-screen bg-gray-50">
         <Navbar />
-        <div className="h-[70vh] flex items-center justify-center">
-          <p className="text-gray-500">Loading saved items...</p>
+
+        <div className="min-h-[70vh] flex items-center justify-center">
+          <div className="text-center">
+            <div className="w-10 h-10 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mx-auto"></div>
+
+            <p className="mt-4 text-gray-500">
+              Loading saved items...
+            </p>
+          </div>
         </div>
-      </>
+      </div>
     );
   }
 
+  // --------------------------------
+  // ERROR
+  // --------------------------------
   if (error) {
-    return <p className="text-center text-red-500">{error}</p>;
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Navbar />
+
+        <div className="min-h-[70vh] flex items-center justify-center px-6">
+          <div className="bg-white rounded-2xl shadow-sm border p-8 text-center max-w-md">
+            <div className="text-4xl mb-4">⚠️</div>
+
+            <h2 className="text-xl font-semibold text-gray-800">
+              Something went wrong
+            </h2>
+
+            <p className="text-red-500 mt-2">
+              {error}
+            </p>
+
+            <button
+              onClick={() =>
+                userId &&
+                dispatch(fetchSavedJobsAndInternships(userId))
+              }
+              className="mt-6 bg-indigo-600 text-white px-5 py-2.5 rounded-lg hover:bg-indigo-700 transition"
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   }
+
+  // --------------------------------
+  // SAFE ARRAYS
+  // --------------------------------
+  const jobs = Array.isArray(savedJobs)
+    ? savedJobs
+    : Object.values(savedJobs || {});
+
+  const internships = Array.isArray(savedInternships)
+    ? savedInternships
+    : Object.values(savedInternships || {});
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
 
-      <div className="max-w-7xl mx-auto px-6 py-10">
+      <main className="max-w-7xl mx-auto px-6 py-10">
 
-        {/* SAVED JOBS */}
+        {/* PAGE HEADER */}
+        <div className="mb-10">
+          <p className="text-sm font-medium text-indigo-600 mb-2">
+            MY ACCOUNT
+          </p>
+
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-900">
+            Saved Jobs & Internships
+          </h1>
+
+          <p className="text-gray-500 mt-2">
+            Jobs and internships you've saved for later.
+          </p>
+        </div>
+
+        {/* =====================================
+            SAVED JOBS
+        ===================================== */}
         <section>
-          <h2 className="text-3xl font-semibold mb-8">
-            Saved Jobs
-          </h2>
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">
+                Saved Jobs
+              </h2>
 
-          {savedJobs.length === 0 ? (
-            <p className="text-gray-500">
-              You haven’t saved any jobs yet.
-            </p>
+              <p className="text-sm text-gray-500 mt-1">
+                {jobs.length} saved {jobs.length === 1 ? "job" : "jobs"}
+              </p>
+            </div>
+          </div>
+
+          {jobs.length === 0 ? (
+            <div className="bg-white border rounded-2xl p-10 text-center">
+              <div className="text-5xl mb-4">
+                💼
+              </div>
+
+              <h3 className="text-lg font-semibold text-gray-800">
+                No saved jobs
+              </h3>
+
+              <p className="text-gray-500 mt-2">
+                Jobs you save will appear here.
+              </p>
+
+              <Link
+                to="/jobs"
+                className="inline-block mt-5 bg-indigo-600 text-white px-5 py-2.5 rounded-lg hover:bg-indigo-700 transition"
+              >
+                Browse Jobs
+              </Link>
+            </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {savedJobs.map((job) => (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {jobs.map((job, index) => (
                 <div
-                  key={job._id}
-                  className="bg-white rounded-2xl p-5 shadow-sm hover:shadow-lg transition border"
+                  key={job?._id || `saved-job-${index}`}
+                  className="bg-white rounded-2xl border shadow-sm hover:shadow-xl transition duration-300 overflow-hidden"
                 >
-                  <div className="flex justify-between items-start pb-4 border-b">
-                    <div>
-                      <h3 className="text-lg font-semibold">
-                        {job.title}
-                      </h3>
-                      <p className="text-sm text-gray-500">
-                        {job.employe?.organizationname}
-                      </p>
+                  {/* CARD HEADER */}
+                  <div className="p-5 border-b">
+                    <div className="flex justify-between items-start gap-4">
+
+                      <div className="min-w-0">
+                        <h3 className="text-lg font-bold text-gray-900 truncate">
+                          {job?.title || "Job Position"}
+                        </h3>
+
+                        <p className="text-sm text-gray-500 mt-1 truncate">
+                          {job?.employe?.organizationname ||
+                            "Organization"}
+                        </p>
+                      </div>
+
+                      {job?.employe?.organizationLogo?.url ? (
+                        <img
+                          src={job.employe.organizationLogo.url}
+                          alt={
+                            job?.employe?.organizationname ||
+                            "Company"
+                          }
+                          className="h-12 w-12 rounded-xl object-contain border bg-white p-1 flex-shrink-0"
+                        />
+                      ) : (
+                        <div className="h-12 w-12 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 font-bold flex-shrink-0">
+                          {job?.employe?.organizationname
+                            ?.charAt(0)
+                            ?.toUpperCase() || "C"}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* CARD BODY */}
+                  <div className="p-5">
+
+                    <div className="space-y-3 text-sm text-gray-600">
+
+                      <div className="flex items-center gap-3">
+                        <i className="ri-briefcase-line text-indigo-500 text-lg"></i>
+
+                        <span>
+                          {job?.jobtype || "Not specified"}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <i className="ri-map-pin-line text-indigo-500 text-lg"></i>
+
+                        <span>
+                          {job?.location || "Location not specified"}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <i className="ri-money-rupee-circle-line text-indigo-500 text-lg"></i>
+
+                        <span>
+                          {job?.salary
+                            ? `₹${job.salary}/month`
+                            : "Salary not specified"}
+                        </span>
+                      </div>
                     </div>
 
-                    <img
-                      src={job.employe?.organizationLogo?.url}
-                      alt="logo"
-                      className="h-12 w-12 object-contain"
-                    />
-                  </div>
+                    {/* ACTIONS */}
+                    <div className="mt-6 pt-5 border-t flex items-center justify-between">
 
-                  <div className="mt-4 space-y-2 text-sm text-gray-600">
-                    <p>
-                      <i className="ri-briefcase-line text-indigo-500"></i>{" "}
-                      {job.jobtype}
-                    </p>
-                    <p>
-                      <i className="ri-map-pin-line text-indigo-500"></i>{" "}
-                      {job.location}
-                    </p>
-                    <p>
-                      <i className="ri-money-rupee-circle-line text-indigo-500"></i>{" "}
-                      ₹{job.salary}/month
-                    </p>
-                  </div>
+                      <Link
+                        to={`/jobs/${job?._id}`}
+                        className="inline-flex items-center gap-1 text-indigo-600 font-semibold text-sm hover:text-indigo-800 transition"
+                      >
+                        View Details
+                        <span>→</span>
+                      </Link>
 
-                  <div className="mt-6 flex items-center justify-between">
-                    <Link
-                      to={`/jobs/${job._id}`}
-                      className="text-indigo-600 font-semibold text-sm"
-                    >
-                      View Details →
-                    </Link>
-
-                    <button
-                      onClick={() => handleRemove("job", job._id)}
-                      className="text-red-500 text-sm hover:underline"
-                    >
-                      Remove
-                    </button>
+                      <button
+                        onClick={() =>
+                          handleRemove("job", job?._id)
+                        }
+                        disabled={!job?._id}
+                        className="text-red-500 text-sm font-medium hover:text-red-700 hover:underline disabled:opacity-50"
+                      >
+                        Remove
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -117,78 +278,175 @@ const SavedItemsPage = () => {
           )}
         </section>
 
-        {/* SAVED INTERNSHIPS */}
+        {/* =====================================
+            SAVED INTERNSHIPS
+        ===================================== */}
         <section className="mt-16">
-          <h2 className="text-3xl font-semibold mb-8">
-            Saved Internships
-          </h2>
 
-          {savedInternships.length === 0 ? (
-            <p className="text-gray-500">
-              You haven’t saved any internships yet.
-            </p>
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">
+                Saved Internships
+              </h2>
+
+              <p className="text-sm text-gray-500 mt-1">
+                {internships.length} saved{" "}
+                {internships.length === 1
+                  ? "internship"
+                  : "internships"}
+              </p>
+            </div>
+          </div>
+
+          {internships.length === 0 ? (
+            <div className="bg-white border rounded-2xl p-10 text-center">
+              <div className="text-5xl mb-4">
+                🎓
+              </div>
+
+              <h3 className="text-lg font-semibold text-gray-800">
+                No saved internships
+              </h3>
+
+              <p className="text-gray-500 mt-2">
+                Internships you save will appear here.
+              </p>
+
+              <Link
+                to="/internships"
+                className="inline-block mt-5 bg-indigo-600 text-white px-5 py-2.5 rounded-lg hover:bg-indigo-700 transition"
+              >
+                Browse Internships
+              </Link>
+            </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {savedInternships.map((internship) => (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+              {internships.map((internship, index) => (
                 <div
-                  key={internship._id}
-                  className="bg-white rounded-2xl p-5 shadow-sm hover:shadow-lg transition border"
+                  key={
+                    internship?._id ||
+                    `saved-internship-${index}`
+                  }
+                  className="bg-white rounded-2xl border shadow-sm hover:shadow-xl transition duration-300 overflow-hidden"
                 >
-                  <div className="flex justify-between items-start pb-4 border-b">
-                    <div>
-                      <h3 className="text-lg font-semibold">
-                        {internship.profile}
-                      </h3>
-                      <p className="text-sm text-gray-500">
-                        {internship.employe?.organizationname}
-                      </p>
+
+                  {/* HEADER */}
+                  <div className="p-5 border-b">
+
+                    <div className="flex justify-between items-start gap-4">
+
+                      <div className="min-w-0">
+
+                        <h3 className="text-lg font-bold text-gray-900 truncate">
+                          {internship?.profile ||
+                            "Internship Position"}
+                        </h3>
+
+                        <p className="text-sm text-gray-500 mt-1 truncate">
+                          {internship?.employe
+                            ?.organizationname ||
+                            "Organization"}
+                        </p>
+
+                      </div>
+
+                      {internship?.employe
+                        ?.organizationLogo?.url ? (
+                        <img
+                          src={
+                            internship.employe
+                              .organizationLogo.url
+                          }
+                          alt={
+                            internship?.employe
+                              ?.organizationname ||
+                            "Company"
+                          }
+                          className="h-12 w-12 rounded-xl object-contain border bg-white p-1 flex-shrink-0"
+                        />
+                      ) : (
+                        <div className="h-12 w-12 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 font-bold flex-shrink-0">
+                          {internship?.employe
+                            ?.organizationname
+                            ?.charAt(0)
+                            ?.toUpperCase() || "C"}
+                        </div>
+                      )}
+
+                    </div>
+                  </div>
+
+                  {/* BODY */}
+                  <div className="p-5">
+
+                    <div className="space-y-3 text-sm text-gray-600">
+
+                      <div className="flex items-center gap-3">
+                        <i className="ri-briefcase-line text-indigo-500 text-lg"></i>
+
+                        <span>
+                          {internship?.internshiptype ||
+                            "Internship"}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <i className="ri-map-pin-line text-indigo-500 text-lg"></i>
+
+                        <span>
+                          {internship?.location ||
+                            "Location not specified"}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <i className="ri-money-rupee-circle-line text-indigo-500 text-lg"></i>
+
+                        <span>
+                          {internship?.stipend?.amount
+                            ? `₹${internship.stipend.amount}/month`
+                            : "Stipend not specified"}
+                        </span>
+                      </div>
+
                     </div>
 
-                    <img
-                      src={internship.employe?.organizationLogo?.url}
-                      alt="logo"
-                      className="h-12 w-12 object-contain"
-                    />
-                  </div>
+                    {/* ACTIONS */}
+                    <div className="mt-6 pt-5 border-t flex items-center justify-between">
 
-                  <div className="mt-4 space-y-2 text-sm text-gray-600">
-                    <p>
-                      <i className="ri-briefcase-line text-indigo-500"></i>{" "}
-                      {internship.internshiptype}
-                    </p>
-                    <p>
-                      <i className="ri-map-pin-line text-indigo-500"></i>{" "}
-                      {internship.location}
-                    </p>
-                    <p>
-                      <i className="ri-money-rupee-circle-line text-indigo-500"></i>{" "}
-                      ₹{internship.stipend?.amount}/month
-                    </p>
-                  </div>
+                      <Link
+                        to={`/internships/${internship?._id}`}
+                        className="inline-flex items-center gap-1 text-indigo-600 font-semibold text-sm hover:text-indigo-800 transition"
+                      >
+                        View Details
+                        <span>→</span>
+                      </Link>
 
-                  <div className="mt-6 flex items-center justify-between">
-                    <Link
-                      to={`/internships/${internship._id}`}
-                      className="text-indigo-600 font-semibold text-sm"
-                    >
-                      View Details →
-                    </Link>
+                      <button
+                        onClick={() =>
+                          handleRemove(
+                            "internship",
+                            internship?._id
+                          )
+                        }
+                        disabled={!internship?._id}
+                        className="text-red-500 text-sm font-medium hover:text-red-700 hover:underline disabled:opacity-50"
+                      >
+                        Remove
+                      </button>
 
-                    <button
-                      onClick={() =>
-                        handleRemove("internship", internship._id)
-                      }
-                      className="text-red-500 text-sm hover:underline"
-                    >
-                      Remove
-                    </button>
+                    </div>
+
                   </div>
                 </div>
               ))}
+
             </div>
           )}
         </section>
-      </div>
+
+      </main>
     </div>
   );
 };

@@ -1,48 +1,55 @@
 import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
-    // Initial state for forgot password functionality
-    forgotPasswordLoading: false,
-    forgotPasswordError: null,
-    forgotPasswordSuccess: false,
+  loading: false,
+  error: null,
+  success: false,
 };
 
 export const forgotPasswordSlice = createSlice({
-    name: "forgotPassword",
-    initialState,
-    reducers: {
-        // Reducer to set loading state during forgot password request
-        forgotPasswordRequest: (state) => {
-            state.forgotPasswordLoading = true;
-            state.forgotPasswordError = null;
-            state.forgotPasswordSuccess = false;
-        },
-        // Reducer to handle successful forgot password request
-        forgotPasswordSuccess: (state) => {
-            state.forgotPasswordLoading = false;
-            state.forgotPasswordSuccess = true;
-        },
-        // Reducer to handle failed forgot password request
-        forgotPasswordFailure: (state, action) => {
-            state.forgotPasswordLoading = false;
-            state.forgotPasswordError = action.payload;
-        },
-        // Reset forgot password state
-        resetForgotPasswordState: (state) => {
-            state.forgotPasswordLoading = false;
-            state.forgotPasswordError = null;
-            state.forgotPasswordSuccess = false;
-        },
+  name: "forgotPassword",
+  initialState,
+
+  reducers: {
+    // ================= REQUEST =================
+    forgotPasswordRequest: (state) => {
+      state.loading = true;
+      state.error = null;
+      state.success = false;
     },
+
+    // ================= SUCCESS =================
+    forgotPasswordSuccess: (state) => {
+      state.loading = false;
+      state.error = null;
+      state.success = true;
+    },
+
+    // ================= FAILURE =================
+    forgotPasswordFailure: (state, action) => {
+      state.loading = false;
+      state.error = action.payload || "Something went wrong";
+      state.success = false;
+    },
+
+    // ================= RESET =================
+    resetForgotPasswordState: (state) => {
+      state.loading = false;
+      state.error = null;
+      state.success = false;
+    },
+  },
 });
 
-// Exporting action creators
+// ================= ACTIONS =================
+
 export const {
-    forgotPasswordRequest,
-    forgotPasswordSuccess,
-    forgotPasswordFailure,
-    resetForgotPasswordState,
+  forgotPasswordRequest,
+  forgotPasswordSuccess,
+  forgotPasswordFailure,
+  resetForgotPasswordState,
 } = forgotPasswordSlice.actions;
 
-// Exporting the reducer
+// ================= REDUCER =================
+
 export default forgotPasswordSlice.reducer;

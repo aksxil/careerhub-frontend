@@ -38,90 +38,153 @@ const Signup = () => {
   }, [user.isAuthenticated, navigate]);
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="h-screen overflow-hidden bg-gradient-to-br from-indigo-50 via-white to-purple-50">
       <Navbar />
 
-      <div className="flex items-center justify-center px-4 py-10">
-        <div className="w-full max-w-2xl bg-white rounded-2xl shadow-lg p-8">
+      {/* MAIN */}
+      <div className="h-[calc(100vh-64px)] flex items-center justify-center px-4">
+        <div className="w-full max-w-3xl bg-white rounded-3xl shadow-xl border border-gray-100 px-8 py-6">
 
           {/* HEADER */}
-          <h2 className="text-3xl font-bold text-center text-indigo-600">
-            Create Student Account
-          </h2>
-          <p className="text-center text-gray-500 mt-2">
-            Start your journey with <span className="font-semibold">CareerHub</span>
-          </p>
-
-          {/* FORM */}
-          <form
-            className="mt-8 space-y-5"
-            onSubmit={submitHandler}
-          >
-            {/* NAME */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <input
-                className="input"
-                name="firstname"
-                type="text"
-                placeholder="First Name"
-                value={formData.firstname}
-                onChange={handleChange}
-                required
-              />
-              <input
-                className="input"
-                name="lastname"
-                type="text"
-                placeholder="Last Name"
-                value={formData.lastname}
-                onChange={handleChange}
-                required
-              />
+          <div className="text-center mb-5">
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-indigo-600 text-white mb-2 shadow-md">
+              <i className="ri-user-add-line text-2xl"></i>
             </div>
 
-            {/* CONTACT */}
-            <input
-              className="input"
-              name="contact"
-              type="text"
-              placeholder="Contact Number"
-              value={formData.contact}
-              onChange={handleChange}
-              required
-            />
+            <h2 className="text-2xl font-bold text-gray-800">
+              Create Student Account
+            </h2>
 
-            {/* EMAIL */}
-            <input
-              className="input"
-              name="email"
-              type="email"
-              placeholder="Email Address"
-              value={formData.email}
-              onChange={handleChange}
-              required
-            />
+            <p className="text-sm text-gray-500 mt-1">
+              Start your journey with{" "}
+              <span className="font-semibold text-indigo-600">
+                CareerHub
+              </span>
+            </p>
+          </div>
 
-            {/* CITY */}
-            <input
-              className="input"
-              name="city"
-              type="text"
-              placeholder="City"
-              value={formData.city}
-              onChange={handleChange}
-              required
-            />
+          {/* FORM */}
+          <form onSubmit={submitHandler} className="space-y-3">
+
+            {/* NAME */}
+            <div className="grid grid-cols-2 gap-4">
+              
+              {/* FIRST NAME */}
+              <div className="relative">
+                <i className="ri-user-line absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-lg pointer-events-none"></i>
+
+                <input
+                  className="input pl-10"
+                  name="firstname"
+                  type="text"
+                  placeholder="First Name"
+                  value={formData.firstname}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+
+              {/* LAST NAME */}
+              <div className="relative">
+                <i className="ri-user-line absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-lg pointer-events-none"></i>
+
+                <input
+                  className="input pl-10"
+                  name="lastname"
+                  type="text"
+                  placeholder="Last Name"
+                  value={formData.lastname}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+
+            </div>
+
+            {/* CONTACT + EMAIL */}
+            <div className="grid grid-cols-2 gap-4">
+
+              {/* CONTACT */}
+              <div className="relative">
+                <i className="ri-phone-line absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-lg pointer-events-none"></i>
+
+                <input
+                  className="input pl-10"
+                  name="contact"
+                  type="tel"
+                  placeholder="Contact Number"
+                  value={formData.contact}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+
+              {/* EMAIL */}
+              <div className="relative">
+                <i className="ri-mail-line absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-lg pointer-events-none"></i>
+
+                <input
+                  className="input pl-10"
+                  name="email"
+                  type="email"
+                  placeholder="Email Address"
+                  value={formData.email}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+
+            </div>
+
+            {/* CITY + PASSWORD */}
+            <div className="grid grid-cols-2 gap-4">
+
+              {/* CITY */}
+              <div className="relative">
+                <i className="ri-map-pin-line absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-lg pointer-events-none"></i>
+
+                <input
+                  className="input pl-10"
+                  name="city"
+                  type="text"
+                  placeholder="City"
+                  value={formData.city}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+
+              {/* PASSWORD */}
+              <div className="relative">
+                <i className="ri-lock-line absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-lg pointer-events-none"></i>
+
+                <input
+                  className="input pl-10"
+                  name="password"
+                  type="password"
+                  placeholder="Create Password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+
+            </div>
 
             {/* GENDER */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-600 mb-2">
+            <div className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5">
+
+              <span className="text-sm font-semibold text-gray-600 flex items-center gap-2">
+                <i className="ri-genderless-line text-indigo-600 text-lg"></i>
                 Gender
-              </label>
+              </span>
+
               <div className="flex gap-6">
+
                 {["Male", "Female", "Other"].map((g) => (
                   <label
                     key={g}
-                    className="flex items-center gap-2 cursor-pointer text-gray-600"
+                    className="flex items-center gap-2 cursor-pointer text-sm text-gray-600"
                   >
                     <input
                       type="radio"
@@ -129,36 +192,30 @@ const Signup = () => {
                       value={g}
                       checked={formData.gender === g}
                       onChange={handleChange}
-                      className="accent-indigo-600"
                       required
+                      className="accent-indigo-600 w-4 h-4"
                     />
-                    {g}
+
+                    <span>{g}</span>
                   </label>
                 ))}
+
               </div>
             </div>
-
-            {/* PASSWORD */}
-            <input
-              className="input"
-              name="password"
-              type="password"
-              placeholder="Create Password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-            />
 
             {/* SUBMIT */}
             <button
               type="submit"
-              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl font-semibold transition"
+              className="w-full bg-indigo-600 hover:bg-indigo-700 active:scale-[0.99] text-white py-2.5 rounded-xl font-semibold transition duration-200 shadow-md shadow-indigo-200"
             >
-              Create Account
+              <span className="flex items-center justify-center gap-2">
+                Create Account
+                <i className="ri-arrow-right-line"></i>
+              </span>
             </button>
 
             {/* FOOTER */}
-            <p className="text-center text-gray-600 text-sm">
+            <p className="text-center text-gray-500 text-sm pt-1">
               Already have an account?{" "}
               <Link
                 to="/signin"
@@ -167,6 +224,7 @@ const Signup = () => {
                 Sign In
               </Link>
             </p>
+
           </form>
         </div>
       </div>
@@ -175,15 +233,35 @@ const Signup = () => {
       <style>{`
         .input {
           width: 100%;
-          padding: 12px 14px;
-          border-radius: 12px;
+          height: 44px;
+          padding: 0 14px;
+          border-radius: 11px;
           border: 1px solid #e5e7eb;
           background: #f9fafb;
           outline: none;
+          font-size: 14px;
+          color: #374151;
+          transition: all 0.2s ease;
         }
+
+        .input::placeholder {
+          color: #9ca3af;
+        }
+
+        .input:hover {
+          border-color: #c7d2fe;
+        }
+
         .input:focus {
           border-color: #6366f1;
           background: white;
+          box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.10);
+        }
+
+        @media (max-width: 640px) {
+          .input {
+            height: 42px;
+          }
         }
       `}</style>
     </div>

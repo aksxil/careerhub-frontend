@@ -1,36 +1,85 @@
 import axios from "../axios";
-import { loaduser, signout , loadJobDetails, loadInternshipDetails, loadRandomInternships, loadRandomJobs, loadStudentDetails, updateInternshipDetails, updateJobDetails, setJobDetails,setLoading, setError, clearError, fetchSavedJobsSuccess, fetchSavedInternshipsSuccess, removeSavedItem} from "./userSlice";
+
+import {
+  loaduser,
+  signout,
+  loadJobDetails,
+  loadInternshipDetails,
+  loadRandomInternships,
+  loadRandomJobs,
+  loadStudentDetails,
+  setJobDetails,
+  setLoading,
+  setError,
+  clearError,
+  fetchSavedJobsSuccess,
+  fetchSavedInternshipsSuccess,
+  removeSavedItem,
+} from "./userSlice";
+
 import {
   forgotPasswordRequest,
   forgotPasswordSuccess,
   forgotPasswordFailure,
-} from './forgotSlice'
-import { toast } from "react-toastify";
+} from "./forgotSlice";
+
+/* =========================================================
+   HELPERS
+========================================================= */
+
+const getErrorMessage = (error, fallback = "Something went wrong") => {
+  return (
+    error?.response?.data?.message ||
+    error?.response?.data?.error ||
+    error?.message ||
+    fallback
+  );
+};
+
+/* =========================================================
+   AUTH - LOAD USER
+========================================================= */
 
 const loadUserDetails = () => async (dispatch) => {
   try {
-    const { data } = await axios.get('/student');
+    const { data } = await axios.get("/student", {
+      withCredentials: true,
+    });
+
     dispatch(loaduser(data.student));
-  } catch (err) {
-    dispatch(setError(err.response.data.message));
+    dispatch(clearError());
+    return data.student;
+  } catch (error) {
+    dispatch(setError(getErrorMessage(error, "Student not logged in")));
+    return null;
   }
 };
+
 const loadEmployeDetails = () => async (dispatch) => {
   try {
-    const { data } = await axios.post('/employe/current');
+    const { data } = await axios.post(
+      "/employe/current",
+      {},
+      {
+        withCredentials: true,
+      }
+    );
+
     dispatch(loaduser(data.employe));
-  } catch (err) {
-    dispatch(setError(err.response.data.message));
+    dispatch(clearError());
+
+    return data.employe;
+  } catch (error) {
+    dispatch(
+      setError(getErrorMessage(error, "Employer not logged in"))
+    );
+    return null;
   }
 };
-// export const asyncsignup = (newuser) => async (dispatch) => {
-//   try {
-//     const { data } = await axios.post("/student/signup", newuser);
-//     dispatch(loaduser(data.user));
-//   } catch (err) {
-//     dispatch(setError(err.response.data.message));
-//   }
-// };
+
+/* =========================================================
+   STUDENT AUTH
+========================================================= */
 
 export const asyncsignup = (newuser) => async (dispatch) => {
   try {
@@ -40,33 +89,60 @@ export const asyncsignup = (newuser) => async (dispatch) => {
 
     await dispatch(asyncloaduser());
 
-  } catch (err) {
-    dispatch(setError(err.response?.data?.message || "Signup failed"));
+    return true;
+  } catch (error) {
+    dispatch(setError(getErrorMessage(error, "Signup failed")));
+    throw error;
   }
 };
-// export const  = (newuser) => async (dispatch) => {
-//   try {
-//     const { data } = await axios.post("/employe/signup", newuser);
-//     dispatch(loaduser(data.user));
-//   } catch (err) {
-//     dispatch(setError(err.response.data.message));
-//   }
-// };
 
-// export const asyncempsignup = (newuser) => async (dispatch) => {
-//   try {
-//     const {data} = await axios.post("/employe/signup", newuser);
-//     dispatch(loaduser(data.user)); // Dispatch action to update user state upon successful signup
-//   } catch (err) {
-//     // If there's an error response from the server, dispatch the error message
-//     if (err.response && err.response.data && err.response.data.message) {
-//       dispatch(setError(err.response.data.message));
-//     } else {
-//       // If there's no error message in the response, dispatch a generic error
-//       dispatch(setError("An error occurred during signup."));
-//     }
-//   }
-// };
+export const asyncsignin = (formData) => async (dispatch) => {
+  dispatch(setLoading(true));
+
+  try {
+    await axios.post("/student/signin", formData, {
+      withCredentials: true,
+    });
+
+    await dispatch(asyncloaduser());
+
+    dispatch(setLoading(false));
+    dispatch(clearError());
+
+    return true;
+  } catch (error) {
+    dispatch(setLoading(false));
+    dispatch(
+      setError(getErrorMessage(error, "Invalid email or password"))
+    );
+
+    throw error;
+  }
+};
+
+export const asyncsignout = () => async (dispatch) => {
+  try {
+    await axios.get("/student/signout", {
+      withCredentials: true,
+    });
+
+    dispatch(signout());
+    dispatch(clearError());
+
+    return true;
+  } catch (error) {
+    dispatch(setError(getErrorMessage(error, "Logout failed")));
+    throw error;
+  }
+};
+
+export const asyncloaduser = () => async (dispatch) => {
+  return await dispatch(loadUserDetails());
+};
+
+/* =========================================================
+   EMPLOYER AUTH
+========================================================= */
 
 export const asyncempsignup = (newuser) => async (dispatch) => {
   try {
@@ -75,650 +151,1320 @@ export const asyncempsignup = (newuser) => async (dispatch) => {
     });
 
     await dispatch(asyncloademploye());
-  } catch (err) {
-    dispatch(setError(err.response?.data?.message || "Signup failed"));
-  }
-};
-export const asyncempsignin = (newuser) => async (dispatch) => {
-  try {
-    const { data } = await axios.post("/employe/signin", newuser, { withCredentials: true });
-    dispatch(loaduser(data.employe));
-    console.log(data.employe)
-  } catch (err) {
-    dispatch(setError(err.response.data.message));
+
+    return true;
+  } catch (error) {
+    dispatch(setError(getErrorMessage(error, "Employer signup failed")));
+    throw error;
   }
 };
 
-export const asyncsignin = (formData) => async (dispatch) => {
-  try {
-    dispatch(setLoading(true));
+export const asyncempsignin = (formData) => async (dispatch) => {
+  dispatch(setLoading(true));
 
-    await axios.post("/student/signin", formData, {
+  try {
+    await axios.post("/employe/signin", formData, {
       withCredentials: true,
     });
 
-    // ✅ VERY IMPORTANT
-    await dispatch(asyncloaduser());
+    await dispatch(asyncloademploye());
 
     dispatch(setLoading(false));
+    dispatch(clearError());
+
+    return true;
   } catch (error) {
     dispatch(setLoading(false));
-    dispatch(setError(error.response?.data?.message || "Login failed"));
+
+    const message = getErrorMessage(
+      error,
+      "Invalid email or password"
+    );
+
+    dispatch(setError(message));
+
+    throw error;
   }
 };
 
-
-export const asyncloaduser = () => async (dispatch) => {
-  dispatch(loadUserDetails());
-};
 export const asyncloademploye = () => async (dispatch) => {
-  dispatch(loadEmployeDetails());
-};
-export const asyncsignout = () => async (dispatch) => {
-  try {
-    await axios.get("/student/signout");
-    dispatch(signout());
-  } catch (err) {
-    dispatch(setError(err.response.data.message));
-  }
+  return await dispatch(loadEmployeDetails());
 };
 
-export const updateUserDetails = (id, updatedUserData) => async (dispatch) => {
-  try {
-    const response = await axios.post(`/student/update/${id}`, updatedUserData,{ withCredentials: true});
-    // dispatch(loaduser(response.data.user));
-    dispatch(asyncloaduser(response.data.user));
-  } catch (err) {
-    dispatch(setError(err.response.data.message));
-  }
-};
-export const updateEmployeDetails = (id, updatedUserData) => async (dispatch) => {
-  try {
-    const response = await axios.post(`/employe/update/${id}`, updatedUserData,{ withCredentials: true});
-    // dispatch(loaduser(response.data.user));
-    dispatch(asyncloademploye(response.data.employe));
-  } catch (err) {
-    dispatch(setError(err.response.data.message));
-  }
-};
+/* =========================================================
+   UPDATE USER / EMPLOYER PROFILE
+========================================================= */
 
+export const updateUserDetails =
+  (id, updatedUserData) => async (dispatch) => {
+    try {
+      const { data } = await axios.post(
+        `/student/update/${id}`,
+        updatedUserData,
+        {
+          withCredentials: true,
+        }
+      );
 
-export const uploadAvatar = (userId, formData) => async (dispatch) => {
+      await dispatch(asyncloaduser());
+
+      return data;
+    } catch (error) {
+      dispatch(
+        setError(getErrorMessage(error, "Failed to update profile"))
+      );
+
+      throw error;
+    }
+  };
+
+export const updateEmployeDetails =
+  (id, updatedUserData) => async (dispatch) => {
+    try {
+      const { data } = await axios.post(
+        `/employe/update/${id}`,
+        updatedUserData,
+        {
+          withCredentials: true,
+        }
+      );
+
+      await dispatch(asyncloademploye());
+
+      return data;
+    } catch (error) {
+      dispatch(
+        setError(getErrorMessage(error, "Failed to update employer profile"))
+      );
+
+      throw error;
+    }
+  };
+
+/* =========================================================
+   AVATAR / ORGANIZATION LOGO
+========================================================= */
+
+export const uploadAvatar =
+  (userId, formData) => async (dispatch) => {
+    try {
+      const { data } = await axios.post(
+        `/student/avatar/${userId}`,
+        formData,
+        {
+          withCredentials: true,
+        }
+      );
+
+      await dispatch(asyncloaduser());
+
+      return data;
+    } catch (error) {
+      dispatch(
+        setError(getErrorMessage(error, "Failed to upload avatar"))
+      );
+
+      throw error;
+    }
+  };
+
+export const uploadOrganizationLogo =
+  (userId, formData) => async (dispatch) => {
+    try {
+      const { data } = await axios.post(
+        `/employe/avatar/${userId}`,
+        formData,
+        {
+          withCredentials: true,
+        }
+      );
+
+      await dispatch(asyncloademploye());
+
+      return data;
+    } catch (error) {
+      dispatch(
+        setError(
+          getErrorMessage(error, "Failed to upload organization logo")
+        )
+      );
+
+      throw error;
+    }
+  };
+
+/* =========================================================
+   FORGOT PASSWORD
+========================================================= */
+
+export const getresetlink = (formData) => async () => {
   try {
-    const response = await axios.post(`/student/avatar/${userId}`, formData);
-    // dispatch(loaduser(response.data.user));
-    dispatch(asyncloaduser(response.data.user));
-  } catch (err) {
-    dispatch(setError(err.response.data.message));
-    throw err;
-  }
-};
-export const uploadOrganizationLogo = (userId, formData) => async (dispatch) => {
-  try {
-    const response = await axios.post(`/employe/avatar/${userId}`, formData);
-    // dispatch(loaduser(response.data.user));
-    dispatch(asyncloademploye(response.data.employe));
-  } catch (err) {
-    dispatch(setError(err.response.data.message));
-    throw err;
-  }
-};
-export const getresetlink = (e) => async () => {
-  try {
-    await axios.post("/send-mail", { email: e.email });
-    toast.success("Email sent!", {
-      position: "top-right",
-      autoClose: 5000,
-      hideProgressBar: false,
-      closeOnClick: true,
-      pauseOnHover: true,
-      draggable: true,
-      progress: undefined,
-      theme: "dark",
+    await axios.post("/send-mail", {
+      email: formData.email,
     });
-  } catch (err) {
-    toast.error("User not found!", {
-      position: "top-right",
-      autoClose: 5000,
-      hideProgressBar: false,
-      closeOnClick: true,
-      pauseOnHover: true,
-      draggable: true,
-      progress: undefined,
-      theme: "dark",
-    });
-  }
-};
 
-export const addEducation = (educationData) => async (dispatch) => {
-  try {
-    await axios.post('/resume/add-edu', educationData,{ withCredentials: true});
-    dispatch(asyncloaduser());
+    return true;
   } catch (error) {
-    dispatch(setError(error.response.data.message));
     throw error;
   }
 };
 
-export const deleteEducation = (educationId) => async (dispatch) => {
-  try {
-    // Make a request to delete the education item by its ID
-    await axios.post(`/resume/delete-edu/${educationId}`);
-    // If successful, dispatch an action to reload user data
-    dispatch(asyncloaduser());
-  } catch (error) {
-    // If there's an error, dispatch an action to set the error message
-    dispatch(setError(error.response.data.message));
-    throw error; // Rethrow the error to handle it where the action is dispatched
-  }
-};
+/* =========================================================
+   RESUME - EDUCATION
+========================================================= */
 
-export const updateEducation = (educationData) => async (dispatch) => {
-  try {
-    // Make a request to update education data
-    const response = await axios.post(`/resume/edit-edu/${educationData.id}`, educationData);
+export const addEducation =
+  (educationData) => async (dispatch) => {
+    try {
+      const { data } = await axios.post(
+        "/resume/add-edu",
+        educationData,
+        {
+          withCredentials: true,
+        }
+      );
 
-    // Assuming your API returns updated user data
-    dispatch(asyncloaduser(response.data.user));
-  } catch (error) {
-    // Dispatch an error action if the request fails
-    dispatch(setError(error.response.data.message));
-    throw error; // Rethrow the error to handle it where the action is dispatched
-  }
-};
+      await dispatch(asyncloaduser());
 
+      return data;
+    } catch (error) {
+      dispatch(
+        setError(getErrorMessage(error, "Failed to add education"))
+      );
 
-export const addInternship = (formData) => async (dispatch) => {
-  try {
-    await axios.post('/resume/add-intern', formData, { withCredentials: true });
-    dispatch(asyncloaduser());
-  } catch (error) {
-    dispatch(setError(error.response.data.message));
-    throw error;
-  }
-};
+      throw error;
+    }
+  };
 
-export const deleteInternship = (internshipId) => async (dispatch) => {
-  try {
-    await axios.post(`/resume/delete-intern/${internshipId}`);
-    dispatch(asyncloaduser());
-  } catch (error) {
-    dispatch(setError(error.response.data.message));
-    throw error;
-  }
-};
+export const deleteEducation =
+  (educationId) => async (dispatch) => {
+    try {
+      const { data } = await axios.post(
+        `/resume/delete-edu/${educationId}`
+      );
 
-export const updateInternship = (id,internshipData) => async (dispatch) => {
-  try {
-    const response = await axios.post(`/resume/edit-intern/${id}`, internshipData);
-    dispatch(asyncloaduser(response.data.user));
-  } catch (error) {
-    dispatch(setError(error.response.data.message));
-    throw error;
-  }
-};
+      await dispatch(asyncloaduser());
+
+      return data;
+    } catch (error) {
+      dispatch(
+        setError(getErrorMessage(error, "Failed to delete education"))
+      );
+
+      throw error;
+    }
+  };
+
+export const updateEducation =
+  (educationData) => async (dispatch) => {
+    try {
+      const { data } = await axios.post(
+        `/resume/edit-edu/${educationData.id}`,
+        educationData
+      );
+
+      await dispatch(asyncloaduser());
+
+      return data;
+    } catch (error) {
+      dispatch(
+        setError(getErrorMessage(error, "Failed to update education"))
+      );
+
+      throw error;
+    }
+  };
+
+/* =========================================================
+   RESUME - INTERNSHIP
+========================================================= */
+
+export const addInternship =
+  (formData) => async (dispatch) => {
+    try {
+      const { data } = await axios.post(
+        "/resume/add-intern",
+        formData,
+        {
+          withCredentials: true,
+        }
+      );
+
+      await dispatch(asyncloaduser());
+
+      return data;
+    } catch (error) {
+      dispatch(
+        setError(getErrorMessage(error, "Failed to add internship"))
+      );
+
+      throw error;
+    }
+  };
+
+export const deleteInternship =
+  (internshipId) => async (dispatch) => {
+    try {
+      const { data } = await axios.post(
+        `/resume/delete-intern/${internshipId}`
+      );
+
+      await dispatch(asyncloaduser());
+
+      return data;
+    } catch (error) {
+      dispatch(
+        setError(getErrorMessage(error, "Failed to delete internship"))
+      );
+
+      throw error;
+    }
+  };
+
+export const updateInternship =
+  (id, internshipData) => async (dispatch) => {
+    try {
+      const { data } = await axios.post(
+        `/resume/edit-intern/${id}`,
+        internshipData
+      );
+
+      await dispatch(asyncloaduser());
+
+      return data;
+    } catch (error) {
+      dispatch(
+        setError(getErrorMessage(error, "Failed to update internship"))
+      );
+
+      throw error;
+    }
+  };
+
+/* =========================================================
+   RESUME - JOB
+========================================================= */
+
 export const addJob = (formData) => async (dispatch) => {
   try {
-    await axios.post('/resume/add-job', formData, { withCredentials: true });
-    dispatch(asyncloaduser());
+    const { data } = await axios.post(
+      "/resume/add-job",
+      formData,
+      {
+        withCredentials: true,
+      }
+    );
+
+    await dispatch(asyncloaduser());
+
+    return data;
   } catch (error) {
-    dispatch(setError(error.response.data.message));
+    dispatch(
+      setError(getErrorMessage(error, "Failed to add job"))
+    );
+
     throw error;
   }
 };
+
 export const deleteJob = (jobId) => async (dispatch) => {
   try {
-    await axios.post(`/resume/delete-job/${jobId}`);
-    dispatch(asyncloaduser());
+    const { data } = await axios.post(
+      `/resume/delete-job/${jobId}`
+    );
+
+    await dispatch(asyncloaduser());
+
+    return data;
   } catch (error) {
-    dispatch(setError(error.response.data.message));
-    throw error;
-  }
-};
-export const updateJob = (jobId, jobData) => async (dispatch) => {
-  try {
-    const response = await axios.post(`/resume/edit-job/${jobId}`, jobData); 
-    dispatch(asyncloaduser(response.data.user));
-  } catch (error) {
-    dispatch(setError(error.response.data.message));
-    throw error;
-  }
-};
-export const addResponsibility = (formData) => async (dispatch) => {
-  try {
-    await axios.post('/resume/add-resp', formData, { withCredentials: true });
-    dispatch(asyncloaduser());
-  } catch (error) {
-    dispatch(setError(error.response.data.message));
-    throw error;
-  }
-};
-export const deleteRespo = (respoId) => async (dispatch) => {
-  try {
-    await axios.post(`/resume/delete-resp/${respoId}`);
-    dispatch(asyncloaduser());
-  } catch (error) {
-    dispatch(setError(error.response.data.message));
+    dispatch(
+      setError(getErrorMessage(error, "Failed to delete job"))
+    );
+
     throw error;
   }
 };
 
-export const updateRespo = (respoId, respoData) => async (dispatch) => {
-  try {
-    const response = await axios.post(`/resume/edit-resp/${respoId}`, respoData); 
-    dispatch(asyncloaduser(response.data.user));
-  } catch (error) {
-    dispatch(setError(error.response.data.message));
-    throw error;
-  }
-};
+export const updateJob =
+  (jobId, jobData) => async (dispatch) => {
+    try {
+      const { data } = await axios.post(
+        `/resume/edit-job/${jobId}`,
+        jobData
+      );
 
-export const addTraining = (formData) => async (dispatch) => {
-  try {
-    await axios.post('/resume/add-course', formData, { withCredentials: true });
-    dispatch(asyncloaduser());
-  } catch (error) {
-    dispatch(setError(error.response.data.message));
-    throw error;
-  }
-};
+      await dispatch(asyncloaduser());
 
-export const deleteTraining = (trainingId) => async (dispatch) => {
-  try {
-    await axios.post(`/resume/delete-course/${trainingId}`);
-    dispatch(asyncloaduser());
-  } catch (error) {
-    dispatch(setError(error.response.data.message));
-    throw error;
-  }
-};
+      return data;
+    } catch (error) {
+      dispatch(
+        setError(getErrorMessage(error, "Failed to update job"))
+      );
 
-export const updateTraing = (trainingId, trainingData) => async (dispatch) => {
-  try {
-    const response = await axios.post(`/resume/edit-course/${trainingId}`, trainingData); 
-    dispatch(asyncloaduser(response.data.user));
-  } catch (error) {
-    dispatch(setError(error.response.data.message));
-    throw error;
-  }
-};
-
-
-export const addProject = (formData) => async (dispatch) => {
-  try {
-    await axios.post('/resume/add-project', formData, { withCredentials: true });
-    dispatch(asyncloaduser());
-  } catch (error) {
-    dispatch(setError(error.response.data.message));
-    throw error;
-  }
-};
-
-export const deleteProject = (projectId) => async (dispatch) => {
-  try {
-    await axios.post(`/resume/delete-project/${projectId}`);
-    dispatch(asyncloaduser());
-  } catch (error) {
-    dispatch(setError(error.response.data.message));
-    throw error;
-  }
-};
-
-export const updateProject = (projectId, projectData) => async (dispatch) => {
-  try {
-    const response = await axios.post(`/resume/edit-project/${projectId}`, projectData); 
-    dispatch(asyncloaduser(response.data.user));
-  } catch (error) {
-    dispatch(setError(error.response.data.message));
-    throw error;
-  }
-};
-
-export const addSkill = (formData) => async (dispatch) => {
-  try {
-    await axios.post('/resume/add-skill', formData, { withCredentials: true });
-    dispatch(asyncloaduser());
-  } catch (error) {
-    dispatch(setError(error.response.data.message));
-    throw error;
-  }
-};
-
-export const deleteSkill = (skillId) => async (dispatch) => {
-  try {
-    await axios.post(`/resume/delete-skill/${skillId}`);
-    dispatch(asyncloaduser());
-  } catch (error) {
-    dispatch(setError(error.response.data.message));
-    throw error;
-  }
-};
-
-export const updateSkill = (skillId, skillData) => async (dispatch) => {
-  try {
-    const response = await axios.post(`/resume/edit-skill/${skillId}`, skillData); 
-    dispatch(asyncloaduser(response.data.user));
-  } catch (error) {
-    dispatch(setError(error.response.data.message));
-    throw error;
-  }
-};
-
-export const addPortfolio = (formData) => async (dispatch) => {
-  try {
-    await axios.post('/resume/add-portfolio', formData, { withCredentials: true });
-    dispatch(asyncloaduser());
-  } catch (error) {
-    dispatch(setError(error.response.data.message));
-    throw error;
-  }
-};
-
-export const updatePortfolio = (portfolioData) => async (dispatch) => {
-  try {
-    const response = await axios.post('/resume/edit-portfolio', portfolioData); 
-    dispatch(asyncloaduser(response.data.user));
-  } catch (error) {
-    dispatch(setError(error.response.data.message));
-    throw error;
-  }
-};
-
-export const addAccom = (formData) => async (dispatch) => {
-  try {
-    await axios.post('/resume/add-accomplishment', formData, { withCredentials: true });
-    dispatch(asyncloaduser());
-  } catch (error) {
-    dispatch(setError(error.response.data.message));
-    throw error;
-  }
-};
-
-export const deleteAccom = (accomId) => async (dispatch) => {
-  try {
-    await axios.post(`/resume/delete-accomplishment/${accomId}`);
-    dispatch(asyncloaduser());
-  } catch (error) {
-    dispatch(setError(error.response.data.message));
-    throw error;
-  }
-};
-
-export const updateAccom = (accomId, accomData) => async (dispatch) => {
-  try {
-    const response = await axios.post(`/resume/edit-accomplishment/${accomId}`, accomData); 
-    dispatch(asyncloaduser(response.data.user));
-  } catch (error) {
-    dispatch(setError(error.response.data.message));
-    throw error;
-  }
-};
-
-// export const addJobPost = (formData) => async (dispatch) => {
-//   try {
-//     await axios.post('/employe/job/create', formData, { withCredentials: true });
-//     dispatch(asyncloademploye());
-//   } catch (error) {
-//     dispatch(setError(error.response.data.message));
-//     throw error;
-//   }
-// };
-export const addJobPost = (jobData) => async (dispatch)=> {
-  try {
-    const res = await axios.post('/employe/job/create', jobData);
-    dispatch(asyncloademploye());
-  } catch (error) {
-    dispatch(setError(error.response.data.message));
-    throw error;
-  }
-};
-
-export const addInternshipPost = (internshipData) => async (dispatch)=> {
-  try {
-    const res = await axios.post('/employe/internship/create', internshipData);
-    dispatch(asyncloademploye());
-  } catch (error) {
-    dispatch(setError(error.response.data.message));
-    throw error;
-  }
-};
-
-export const fetchJobDetails = (jobId) => async (dispatch) => {
-  try {
-    const { data } = await axios.post(`/employe/job/read/${jobId}`); // Fetch job details by job ID
-    // console.log(data)
-    dispatch(loadJobDetails({ jobId, jobDetails: data })); // Dispatch action to load job details into Redux state
-  } catch (error) {
-    // Handle error
-    console.error('Error fetching job details:', error);
-  }
-};
-
-export const fetchJobDetailsStu = (jobId) => async (dispatch) => {
-  try {
-    const { data } = await axios.get(`/jobs/${jobId}`); // Fetch job details by job ID using GET request
-    // console.log(data)
-    dispatch(loadJobDetails({ jobId, jobDetails: data }));
-    // console.log(jobDetails) // Dispatch action to load job details into Redux state
-  } catch (error) {
-    // Handle error
-    console.error('Error fetching job details:', error);
-  }
-};
-
-export const fetchInternDetailsStu = (internshipId) => async (dispatch) => {
-  try {
-    const { data } = await axios.get(`/internships/${internshipId}`); // Fetch internship details by ID
-    console.log(data)
-    dispatch(loadInternshipDetails({ internshipId, internshipDetails: data })); // Dispatch action to load internship details into Redux state
-  } catch (error) {
-    // Handle error
-    console.error('Error fetching internship details:', error);
-  }
-};
-
-
-export const fetchInternshipDetails = (internshipId) => async (dispatch) => {
-  try {
-    const { data } = await axios.post(`/employe/internship/read/${internshipId}`); // Fetch internship details by ID
-    // console.log(data.internship.employe.firstname)
-    dispatch(loadInternshipDetails({ internshipId, internshipDetails: data.internship })); // Dispatch action to load internship details into Redux state
-  } catch (error) {
-    // Handle error
-    console.error('Error fetching internship details:', error);
-  }
-};
-
-
-
-export const updateJobPost = (jobId, jobData) => async (dispatch) => {
-  try {
-    const response = await axios.post(`/employe/job/update/${jobId}`, jobData); 
-    // Dispatch setJobDetails action to update job details in Redux store
-    dispatch(setJobDetails({ jobId, jobDetails: response.data }));
-  } catch (error) {
-    // Handle error
-    throw error;
-  }
-};
-export const deleteJobPost = (jobId, callback) => async (dispatch) => {
-  try {
-    const response = await axios.delete(`/employe/job/delete/${jobId}`); 
-    dispatch(asyncloademploye());
-    // Execute callback function after successful deletion
-    if (callback && typeof callback === 'function') {
-        callback();
+      throw error;
     }
-  } catch (error) {
-    dispatch(setError(error.response.data.message));
-    throw error;
-  }
-};
+  };
 
+/* =========================================================
+   RESUME - RESPONSIBILITY
+========================================================= */
 
+export const addResponsibility =
+  (formData) => async (dispatch) => {
+    try {
+      const { data } = await axios.post(
+        "/resume/add-resp",
+        formData,
+        {
+          withCredentials: true,
+        }
+      );
 
-export const updateInternshipPost = (internshipId, internshipData) => async (dispatch) => {
-  try {
-    const response = await axios.post(`/employe/internship/update/${internshipId}`, internshipData); 
-    dispatch(asyncloademploye());
-    dispatch(updateInternshipDetails())
-  } catch (error) {
-    dispatch(setError(error.response.data.message));
-    throw error;
-  }
-};
+      await dispatch(asyncloaduser());
 
-export const deleteInternshipPost = (internshipId, callback) => async (dispatch) => {
-  try {
-    const response = await axios.delete(`/employe/internship/delete/${internshipId}`); 
-    dispatch(asyncloademploye());
-    // Execute callback function after successful deletion
-    if (callback && typeof callback === 'function') {
-        callback();
+      return data;
+    } catch (error) {
+      dispatch(
+        setError(
+          getErrorMessage(error, "Failed to add responsibility")
+        )
+      );
+
+      throw error;
     }
-  } catch (error) {
-    dispatch(setError(error.response.data.message));
-    throw error;
-  }
-};
+  };
 
+export const deleteRespo =
+  (respoId) => async (dispatch) => {
+    try {
+      const { data } = await axios.post(
+        `/resume/delete-resp/${respoId}`
+      );
 
+      await dispatch(asyncloaduser());
+
+      return data;
+    } catch (error) {
+      dispatch(
+        setError(
+          getErrorMessage(error, "Failed to delete responsibility")
+        )
+      );
+
+      throw error;
+    }
+  };
+
+export const updateRespo =
+  (respoId, respoData) => async (dispatch) => {
+    try {
+      const { data } = await axios.post(
+        `/resume/edit-resp/${respoId}`,
+        respoData
+      );
+
+      await dispatch(asyncloaduser());
+
+      return data;
+    } catch (error) {
+      dispatch(
+        setError(
+          getErrorMessage(error, "Failed to update responsibility")
+        )
+      );
+
+      throw error;
+    }
+  };
+
+/* =========================================================
+   RESUME - TRAINING / COURSE
+========================================================= */
+
+export const addTraining =
+  (formData) => async (dispatch) => {
+    try {
+      const { data } = await axios.post(
+        "/resume/add-course",
+        formData,
+        {
+          withCredentials: true,
+        }
+      );
+
+      await dispatch(asyncloaduser());
+
+      return data;
+    } catch (error) {
+      dispatch(
+        setError(getErrorMessage(error, "Failed to add training"))
+      );
+
+      throw error;
+    }
+  };
+
+export const deleteTraining =
+  (trainingId) => async (dispatch) => {
+    try {
+      const { data } = await axios.post(
+        `/resume/delete-course/${trainingId}`
+      );
+
+      await dispatch(asyncloaduser());
+
+      return data;
+    } catch (error) {
+      dispatch(
+        setError(getErrorMessage(error, "Failed to delete training"))
+      );
+
+      throw error;
+    }
+  };
+
+export const updateTraing =
+  (trainingId, trainingData) => async (dispatch) => {
+    try {
+      const { data } = await axios.post(
+        `/resume/edit-course/${trainingId}`,
+        trainingData
+      );
+
+      await dispatch(asyncloaduser());
+
+      return data;
+    } catch (error) {
+      dispatch(
+        setError(getErrorMessage(error, "Failed to update training"))
+      );
+
+      throw error;
+    }
+  };
+
+/* =========================================================
+   RESUME - PROJECT
+========================================================= */
+
+export const addProject =
+  (formData) => async (dispatch) => {
+    try {
+      const { data } = await axios.post(
+        "/resume/add-project",
+        formData,
+        {
+          withCredentials: true,
+        }
+      );
+
+      await dispatch(asyncloaduser());
+
+      return data;
+    } catch (error) {
+      dispatch(
+        setError(getErrorMessage(error, "Failed to add project"))
+      );
+
+      throw error;
+    }
+  };
+
+export const deleteProject =
+  (projectId) => async (dispatch) => {
+    try {
+      const { data } = await axios.post(
+        `/resume/delete-project/${projectId}`
+      );
+
+      await dispatch(asyncloaduser());
+
+      return data;
+    } catch (error) {
+      dispatch(
+        setError(getErrorMessage(error, "Failed to delete project"))
+      );
+
+      throw error;
+    }
+  };
+
+export const updateProject =
+  (projectId, projectData) => async (dispatch) => {
+    try {
+      const { data } = await axios.post(
+        `/resume/edit-project/${projectId}`,
+        projectData
+      );
+
+      await dispatch(asyncloaduser());
+
+      return data;
+    } catch (error) {
+      dispatch(
+        setError(getErrorMessage(error, "Failed to update project"))
+      );
+
+      throw error;
+    }
+  };
+
+/* =========================================================
+   RESUME - SKILL
+========================================================= */
+
+export const addSkill =
+  (formData) => async (dispatch) => {
+    try {
+      const { data } = await axios.post(
+        "/resume/add-skill",
+        formData,
+        {
+          withCredentials: true,
+        }
+      );
+
+      await dispatch(asyncloaduser());
+
+      return data;
+    } catch (error) {
+      dispatch(
+        setError(getErrorMessage(error, "Failed to add skill"))
+      );
+
+      throw error;
+    }
+  };
+
+export const deleteSkill =
+  (skillId) => async (dispatch) => {
+    try {
+      const { data } = await axios.post(
+        `/resume/delete-skill/${skillId}`
+      );
+
+      await dispatch(asyncloaduser());
+
+      return data;
+    } catch (error) {
+      dispatch(
+        setError(getErrorMessage(error, "Failed to delete skill"))
+      );
+
+      throw error;
+    }
+  };
+
+export const updateSkill =
+  (skillId, skillData) => async (dispatch) => {
+    try {
+      const { data } = await axios.post(
+        `/resume/edit-skill/${skillId}`,
+        skillData
+      );
+
+      await dispatch(asyncloaduser());
+
+      return data;
+    } catch (error) {
+      dispatch(
+        setError(getErrorMessage(error, "Failed to update skill"))
+      );
+
+      throw error;
+    }
+  };
+
+/* =========================================================
+   RESUME - PORTFOLIO
+========================================================= */
+
+export const addPortfolio =
+  (formData) => async (dispatch) => {
+    try {
+      const { data } = await axios.post(
+        "/resume/add-portfolio",
+        formData,
+        {
+          withCredentials: true,
+        }
+      );
+
+      await dispatch(asyncloaduser());
+
+      return data;
+    } catch (error) {
+      dispatch(
+        setError(getErrorMessage(error, "Failed to add portfolio"))
+      );
+
+      throw error;
+    }
+  };
+
+export const updatePortfolio =
+  (portfolioData) => async (dispatch) => {
+    try {
+      const { data } = await axios.post(
+        "/resume/edit-portfolio",
+        portfolioData
+      );
+
+      await dispatch(asyncloaduser());
+
+      return data;
+    } catch (error) {
+      dispatch(
+        setError(getErrorMessage(error, "Failed to update portfolio"))
+      );
+
+      throw error;
+    }
+  };
+
+/* =========================================================
+   RESUME - ACCOMPLISHMENT
+========================================================= */
+
+export const addAccom =
+  (formData) => async (dispatch) => {
+    try {
+      const { data } = await axios.post(
+        "/resume/add-accomplishment",
+        formData,
+        {
+          withCredentials: true,
+        }
+      );
+
+      await dispatch(asyncloaduser());
+
+      return data;
+    } catch (error) {
+      dispatch(
+        setError(
+          getErrorMessage(error, "Failed to add accomplishment")
+        )
+      );
+
+      throw error;
+    }
+  };
+
+export const deleteAccom =
+  (accomId) => async (dispatch) => {
+    try {
+      const { data } = await axios.post(
+        `/resume/delete-accomplishment/${accomId}`
+      );
+
+      await dispatch(asyncloaduser());
+
+      return data;
+    } catch (error) {
+      dispatch(
+        setError(
+          getErrorMessage(error, "Failed to delete accomplishment")
+        )
+      );
+
+      throw error;
+    }
+  };
+
+export const updateAccom =
+  (accomId, accomData) => async (dispatch) => {
+    try {
+      const { data } = await axios.post(
+        `/resume/edit-accomplishment/${accomId}`,
+        accomData
+      );
+
+      await dispatch(asyncloaduser());
+
+      return data;
+    } catch (error) {
+      dispatch(
+        setError(
+          getErrorMessage(error, "Failed to update accomplishment")
+        )
+      );
+
+      throw error;
+    }
+  };
+
+/* =========================================================
+   EMPLOYER - JOB POST
+========================================================= */
+
+export const addJobPost =
+  (jobData) => async (dispatch) => {
+    try {
+      const { data } = await axios.post(
+        "/employe/job/create",
+        jobData,
+        {
+          withCredentials: true,
+        }
+      );
+
+      await dispatch(asyncloademploye());
+
+      return data;
+    } catch (error) {
+      dispatch(
+        setError(getErrorMessage(error, "Failed to post job"))
+      );
+
+      throw error;
+    }
+  };
+
+export const fetchJobDetails =
+  (jobId) => async (dispatch) => {
+    try {
+      const { data } = await axios.post(
+        `/employe/job/read/${jobId}`,
+        {},
+        {
+          withCredentials: true,
+        }
+      );
+
+      dispatch(
+        loadJobDetails({
+          jobId,
+          jobDetails: data,
+        })
+      );
+
+      return data;
+    } catch (error) {
+      dispatch(
+        setError(
+          getErrorMessage(error, "Failed to fetch job details")
+        )
+      );
+
+      throw error;
+    }
+  };
+
+export const updateJobPost =
+  (jobId, jobData) => async (dispatch) => {
+    try {
+      const { data } = await axios.post(
+        `/employe/job/update/${jobId}`,
+        jobData,
+        {
+          withCredentials: true,
+        }
+      );
+
+      dispatch(
+        setJobDetails({
+          jobId,
+          jobDetails: data,
+        })
+      );
+
+      await dispatch(asyncloademploye());
+
+      return data;
+    } catch (error) {
+      dispatch(
+        setError(getErrorMessage(error, "Failed to update job"))
+      );
+
+      throw error;
+    }
+  };
+
+export const deleteJobPost =
+  (jobId, callback) => async (dispatch) => {
+    try {
+      const { data } = await axios.delete(
+        `/employe/job/delete/${jobId}`,
+        {
+          withCredentials: true,
+        }
+      );
+
+      await dispatch(asyncloademploye());
+
+      if (typeof callback === "function") {
+        callback();
+      }
+
+      return data;
+    } catch (error) {
+      dispatch(
+        setError(getErrorMessage(error, "Failed to delete job"))
+      );
+
+      throw error;
+    }
+  };
+
+/* =========================================================
+   EMPLOYER - INTERNSHIP POST
+========================================================= */
+
+export const addInternshipPost =
+  (internshipData) => async (dispatch) => {
+    try {
+      const { data } = await axios.post(
+        "/employe/internship/create",
+        internshipData,
+        {
+          withCredentials: true,
+        }
+      );
+
+      await dispatch(asyncloademploye());
+
+      return data;
+    } catch (error) {
+      dispatch(
+        setError(
+          getErrorMessage(error, "Failed to post internship")
+        )
+      );
+
+      throw error;
+    }
+  };
+
+export const fetchInternshipDetails =
+  (internshipId) => async (dispatch) => {
+    try {
+      const { data } = await axios.post(
+        `/employe/internship/read/${internshipId}`,
+        {},
+        {
+          withCredentials: true,
+        }
+      );
+
+      const internship = data?.internship || data;
+
+      dispatch(
+        loadInternshipDetails({
+          internshipId,
+          internshipDetails: internship,
+        })
+      );
+
+      return internship;
+    } catch (error) {
+      dispatch(
+        setError(
+          getErrorMessage(
+            error,
+            "Failed to fetch internship details"
+          )
+        )
+      );
+
+      throw error;
+    }
+  };
+
+export const updateInternshipPost =
+  (internshipId, internshipData) => async (dispatch) => {
+    try {
+      const { data } = await axios.post(
+        `/employe/internship/update/${internshipId}`,
+        internshipData,
+        {
+          withCredentials: true,
+        }
+      );
+
+      const updatedInternship =
+        data?.internship || data;
+
+      dispatch(
+        loadInternshipDetails({
+          internshipId,
+          internshipDetails: updatedInternship,
+        })
+      );
+
+      await dispatch(asyncloademploye());
+
+      return data;
+    } catch (error) {
+      dispatch(
+        setError(
+          getErrorMessage(
+            error,
+            "Failed to update internship"
+          )
+        )
+      );
+
+      throw error;
+    }
+  };
+
+export const deleteInternshipPost =
+  (internshipId, callback) => async (dispatch) => {
+    try {
+      const { data } = await axios.delete(
+        `/employe/internship/delete/${internshipId}`,
+        {
+          withCredentials: true,
+        }
+      );
+
+      await dispatch(asyncloademploye());
+
+      if (typeof callback === "function") {
+        callback();
+      }
+
+      return data;
+    } catch (error) {
+      dispatch(
+        setError(
+          getErrorMessage(error, "Failed to delete internship")
+        )
+      );
+
+      throw error;
+    }
+  };
+
+/* =========================================================
+   STUDENT - PUBLIC JOBS / INTERNSHIPS
+========================================================= */
 
 export const fetchRandomJobs = () => async (dispatch) => {
   try {
-    const { data } = await axios.get('/jobs'); // Assuming the endpoint for fetching random jobs is /api/randomJobs
-    dispatch(loadRandomJobs(data)); // Dispatch action to load random jobs into Redux state
+    const { data } = await axios.get("/jobs");
+
+    dispatch(loadRandomJobs(data));
+
+    return data;
   } catch (error) {
-    // Handle error
-    dispatch(setError(error.message));
-    console.error('Error fetching random jobs:', error);
+    dispatch(
+      setError(
+        getErrorMessage(error, "Failed to fetch jobs")
+      )
+    );
+
+    throw error;
   }
 };
 
-export const fetchRandomInternships = () => async (dispatch) => {
-  try {
-    const { data } = await axios.get('/internships'); // Assuming the endpoint for fetching random internships is /api/randomInternships
-    dispatch(loadRandomInternships(data)); // Dispatch action to load random internships into Redux state
-  } catch (error) {
-    // Handle error
-    dispatch(setError(error.message));
-    console.error('Error fetching random internships:', error);
-  }
-};
+export const fetchRandomInternships =
+  () => async (dispatch) => {
+    try {
+      const { data } = await axios.get("/internships");
 
+      dispatch(loadRandomInternships(data));
 
+      return data;
+    } catch (error) {
+      dispatch(
+        setError(
+          getErrorMessage(
+            error,
+            "Failed to fetch internships"
+          )
+        )
+      );
 
-export const applyForJob = (jobId) => async (dispatch) => {
-  try {
-    const response = await axios.post(`/student/apply/job/${jobId}`);
-    // Dispatch an action to inform the Redux store about the application status
-    dispatch(applicationSuccess(response.data));
-  } catch (error) {
-    // Dispatch an action to handle error cases
-    dispatch(applicationFailure(error.message));
-  }
-};
+      throw error;
+    }
+  };
 
-export const applyForInternship = (internshipId) => async (dispatch) => {
-  try {
-    const response = await axios.post(`/student/apply/internship/${internshipId}`);
-    // Dispatch an action to inform the Redux store about the application status
-    dispatch(applicationSuccess(response.data));
-  } catch (error) {
-    // Dispatch an action to handle error cases
-    dispatch(applicationFailure(error.message));
-  }
-};
+export const fetchJobDetailsStu =
+  (jobId) => async (dispatch) => {
+    try {
+      const { data } = await axios.get(
+        `/jobs/${jobId}`
+      );
 
-// Define action creators for application success and failure
+      dispatch(
+        loadJobDetails({
+          jobId,
+          jobDetails: data,
+        })
+      );
+
+      return data;
+    } catch (error) {
+      dispatch(
+        setError(
+          getErrorMessage(
+            error,
+            "Failed to fetch job details"
+          )
+        )
+      );
+
+      throw error;
+    }
+  };
+
+export const fetchInternDetailsStu =
+  (internshipId) => async (dispatch) => {
+    try {
+      const { data } = await axios.get(
+        `/internships/${internshipId}`
+      );
+
+      dispatch(
+        loadInternshipDetails({
+          internshipId,
+          internshipDetails: data,
+        })
+      );
+
+      return data;
+    } catch (error) {
+      dispatch(
+        setError(
+          getErrorMessage(
+            error,
+            "Failed to fetch internship details"
+          )
+        )
+      );
+
+      throw error;
+    }
+  };
+
+/* =========================================================
+   STUDENT - APPLY
+========================================================= */
+
 const applicationSuccess = (data) => ({
-  type: 'user/applicationSuccess',
+  type: "user/applicationSuccess",
   payload: data,
 });
 
 const applicationFailure = (error) => ({
-  type: 'user/applicationFailure',
+  type: "user/applicationFailure",
   payload: error,
 });
 
+export const applyForJob =
+  (jobId) => async (dispatch) => {
+    try {
+      const { data } = await axios.post(
+        `/student/apply/job/${jobId}`,
+        {},
+        {
+          withCredentials: true,
+        }
+      );
 
-// Action to fetch user's applied jobs and internships
-export const fetchMyApplications = () => async (dispatch) => {
-  try {
-    // Fetch the user's applied jobs and internships from the backend
-    const res = await axios.post('/myapplications');
-    // Assuming the response contains an object with 'jobs' and 'internships' arrays
-    const { jobs, internships } = res.data;
-    // Dispatch actions to load job and internship details
-    jobs.forEach(job => {
-      dispatch(loadJobDetails({ jobId: job._id, jobDetails: job }));
-    });
+      dispatch(applicationSuccess(data));
 
-    internships.forEach(internship => {
-      dispatch(loadInternshipDetails({ internshipId: internship._id, internshipDetails: internship }));
-    });
-  } catch (error) {
-    dispatch(setError(error.response.data));
-  }
-};
+      return data;
+    } catch (error) {
+      const message = getErrorMessage(
+        error,
+        "Failed to apply for job"
+      );
 
+      dispatch(applicationFailure(message));
 
-export const fetchStudentDetails = (studentId) => {
-  return async (dispatch) => {
-      try {
-          const response = await axios.get(`/employe/student-details/${studentId}`);
-          const student = response.data;
-          console.log(student)
-          if (student.message && student.message === 'Student not found') {
-              // Handle the case where the student is not found
-              // For example, you can return null or an empty object
-              return null;
-          }
-          dispatch(loadStudentDetails({ studentId, studentDetails: student }));
-          return student;
-      } catch (error) {
-          throw error;
+      throw error;
+    }
+  };
+
+export const applyForInternship =
+  (internshipId) => async (dispatch) => {
+    try {
+      const { data } = await axios.post(
+        `/student/apply/internship/${internshipId}`,
+        {},
+        {
+          withCredentials: true,
+        }
+      );
+
+      dispatch(applicationSuccess(data));
+
+      return data;
+    } catch (error) {
+      const message = getErrorMessage(
+        error,
+        "Failed to apply for internship"
+      );
+
+      dispatch(applicationFailure(message));
+
+      throw error;
+    }
+  };
+
+/* =========================================================
+   STUDENT - MY APPLICATIONS
+========================================================= */
+
+export const fetchMyApplications =
+  () => async (dispatch) => {
+    try {
+      const { data } = await axios.post(
+        "/myapplications",
+        {},
+        {
+          withCredentials: true,
+        }
+      );
+
+      const jobs = data?.jobs || [];
+      const internships = data?.internships || [];
+
+      jobs.forEach((job) => {
+        dispatch(
+          loadJobDetails({
+            jobId: job._id,
+            jobDetails: job,
+          })
+        );
+      });
+
+      internships.forEach((internship) => {
+        dispatch(
+          loadInternshipDetails({
+            internshipId: internship._id,
+            internshipDetails: internship,
+          })
+        );
+      });
+
+      return data;
+    } catch (error) {
+      dispatch(
+        setError(
+          getErrorMessage(
+            error,
+            "Failed to fetch applications"
+          )
+        )
+      );
+
+      throw error;
+    }
+  };
+
+/* =========================================================
+   EMPLOYER - STUDENT DETAILS
+========================================================= */
+
+export const fetchStudentDetails =
+  (studentId) => async (dispatch) => {
+    try {
+      const { data } = await axios.get(
+        `/employe/student-details/${studentId}`,
+        {
+          withCredentials: true,
+        }
+      );
+
+      if (data?.message === "Student not found") {
+        return null;
       }
-  };
-};
 
-// Action to add a student as shortlisted for a job
-export const addShortlistedStudent = (jobId, studentId) => {
-  return async (dispatch) => {
-    try {
-      const response = await axios.post(`/employe/jobs/${jobId}/addShortlisted/${studentId}`);
-      console.log(response.data); // Log success message
-      // Dispatch any additional actions or handle success as needed
+      dispatch(
+        loadStudentDetails({
+          studentId,
+          studentDetails: data,
+        })
+      );
+
+      return data;
     } catch (error) {
-      console.error('Error adding student as shortlisted:', error);
-      // Handle error or dispatch failure action
+      dispatch(
+        setError(
+          getErrorMessage(
+            error,
+            "Failed to fetch student details"
+          )
+        )
+      );
+
+      throw error;
     }
   };
-};
 
-// Action to add a student as shortlisted for a job
-export const addShortlistedStudentInternship = (internshipId, studentId) => {
-  return async (dispatch) => {
+/* =========================================================
+   EMPLOYER - SHORTLIST STUDENT
+========================================================= */
+
+export const addShortlistedStudent =
+  (jobId, studentId) => async (dispatch) => {
     try {
-      const response = await axios.post(`/employe/internships/${internshipId}/addShortlisted/${studentId}`);
-      console.log(response.data); // Log success message
-      // Dispatch any additional actions or handle success as needed
+      const { data } = await axios.post(
+        `/employe/jobs/${jobId}/addShortlisted/${studentId}`,
+        {},
+        {
+          withCredentials: true,
+        }
+      );
+
+      return data;
     } catch (error) {
-      console.error('Error adding student as shortlisted:', error);
-      // Handle error or dispatch failure action
+      dispatch(
+        setError(
+          getErrorMessage(
+            error,
+            "Failed to shortlist student"
+          )
+        )
+      );
+
+      throw error;
     }
   };
-};
 
+export const addShortlistedStudentInternship =
+  (internshipId, studentId) => async (dispatch) => {
+    try {
+      const { data } = await axios.post(
+        `/employe/internships/${internshipId}/addShortlisted/${studentId}`,
+        {},
+        {
+          withCredentials: true,
+        }
+      );
 
+      return data;
+    } catch (error) {
+      dispatch(
+        setError(
+          getErrorMessage(
+            error,
+            "Failed to shortlist student"
+          )
+        )
+      );
 
+      throw error;
+    }
+  };
 
-// Action types
-export const SAVE_JOB_INTERNSHIP_REQUEST = 'SAVE_JOB_INTERNSHIP_REQUEST';
-export const SAVE_JOB_INTERNSHIP_SUCCESS = 'SAVE_JOB_INTERNSHIP_SUCCESS';
-export const SAVE_JOB_INTERNSHIP_FAILURE = 'SAVE_JOB_INTERNSHIP_FAILURE';
+/* =========================================================
+   SAVE JOB / INTERNSHIP
+========================================================= */
 
-// Action creators
+export const SAVE_JOB_INTERNSHIP_REQUEST =
+  "SAVE_JOB_INTERNSHIP_REQUEST";
+
+export const SAVE_JOB_INTERNSHIP_SUCCESS =
+  "SAVE_JOB_INTERNSHIP_SUCCESS";
+
+export const SAVE_JOB_INTERNSHIP_FAILURE =
+  "SAVE_JOB_INTERNSHIP_FAILURE";
+
 export const saveJobInternshipRequest = () => ({
   type: SAVE_JOB_INTERNSHIP_REQUEST,
 });
@@ -732,134 +1478,267 @@ export const saveJobInternshipFailure = (error) => ({
   payload: error,
 });
 
-// Thunk action creator to save a job or internship
-export const saveJobInternship = (studentId, itemId, itemType) => async (dispatch) => {
-  dispatch(saveJobInternshipRequest());
-  try {
-    await axios.post(`/student/save`, { studentId, itemId, itemType });
-    dispatch(saveJobInternshipSuccess());
-  } catch (error) {
-    dispatch(saveJobInternshipFailure(error.message));
-  }
-};
+export const saveJobInternship =
+  (studentId, itemId, itemType) => async (dispatch) => {
+    dispatch(saveJobInternshipRequest());
 
-export const fetchSavedJobsAndInternships = (studentId) => async (dispatch) => {
-  try {
+    try {
+      const { data } = await axios.post(
+        "/student/save",
+        {
+          studentId,
+          itemId,
+          itemType,
+        },
+        {
+          withCredentials: true,
+        }
+      );
+
+      dispatch(saveJobInternshipSuccess());
+
+      return data;
+    } catch (error) {
+      const message = getErrorMessage(
+        error,
+        "Failed to save item"
+      );
+
+      dispatch(saveJobInternshipFailure(message));
+
+      throw error;
+    }
+  };
+
+export const fetchSavedJobsAndInternships =
+  (studentId) => async (dispatch) => {
     dispatch(setLoading(true));
 
-    const response = await axios.get(`/student/${studentId}/saved`);
-    const data = response.data; // Access the data property of the response object
-    if (!data) {
-      throw new Error('Failed to fetch saved jobs and internships');
+    try {
+      const { data } = await axios.get(
+        `/student/${studentId}/saved`,
+        {
+          withCredentials: true,
+        }
+      );
+
+      if (!Array.isArray(data)) {
+        throw new Error(
+          "Invalid saved items response"
+        );
+      }
+
+      const savedJobs = data.filter(
+        (item) => item.type === "job"
+      );
+
+      const savedInternships = data.filter(
+        (item) => item.type === "internship"
+      );
+
+      dispatch(fetchSavedJobsSuccess(savedJobs));
+      dispatch(
+        fetchSavedInternshipsSuccess(savedInternships)
+      );
+
+      dispatch(setLoading(false));
+
+      return data;
+    } catch (error) {
+      dispatch(
+        setError(
+          getErrorMessage(
+            error,
+            "Failed to fetch saved items"
+          )
+        )
+      );
+
+      dispatch(setLoading(false));
+
+      throw error;
     }
+  };
 
-    const savedJobs = data.filter(item => item.type === 'job'); // Assuming job documents have a 'type' field
-    const savedInternships = data.filter(item => item.type === 'internship'); // Assuming internship documents have a 'type' field
+export const removeSavedItemAsync =
+  (userId, itemType, itemId) => async (dispatch) => {
+    try {
+      const { data } = await axios.post(
+        `/remove/${userId}/${itemType}/${itemId}`,
+        {},
+        {
+          withCredentials: true,
+        }
+      );
 
-    dispatch(fetchSavedJobsSuccess(savedJobs));
-    dispatch(fetchSavedInternshipsSuccess(savedInternships));
-    dispatch(setLoading(false));
-  } catch (error) {
-    dispatch(setError(error.message));
-    dispatch(setLoading(false));
-  }
-};
+      dispatch(
+        removeSavedItem({
+          itemType,
+          itemId,
+          userId,
+        })
+      );
 
+      return data;
+    } catch (error) {
+      dispatch(
+        setError(
+          getErrorMessage(
+            error,
+            "Failed to remove saved item"
+          )
+        )
+      );
 
-export const removeSavedItemAsync = (userId, itemType, itemId) => async (dispatch) => {
-  try {
-    const response = await axios.post(`/remove/${userId}/${itemType}/${itemId}`);
-    if (response.status === 200) {
-      dispatch(removeSavedItem({ itemType, itemId, userId }));
-    } else {
-      throw new Error('Failed to remove saved item');
+      throw error;
     }
-  } catch (error) {
-    console.error('Error removing saved item:', error);
-    dispatch(setError('Failed to remove saved item'));
-    throw error;
-  }
-};
+  };
 
+/* =========================================================
+   PASSWORD RESET
+========================================================= */
 
-// Action types
-const RESET_PASSWORD_REQUEST = 'RESET_PASSWORD_REQUEST';
-const RESET_PASSWORD_SUCCESS = 'RESET_PASSWORD_SUCCESS';
-const RESET_PASSWORD_FAILURE = 'RESET_PASSWORD_FAILURE';
+const RESET_PASSWORD_REQUEST =
+  "RESET_PASSWORD_REQUEST";
 
-// Action creators
+const RESET_PASSWORD_SUCCESS =
+  "RESET_PASSWORD_SUCCESS";
+
+const RESET_PASSWORD_FAILURE =
+  "RESET_PASSWORD_FAILURE";
+
 const resetPasswordRequest = () => ({
-  type: RESET_PASSWORD_REQUEST
+  type: RESET_PASSWORD_REQUEST,
 });
 
 const resetPasswordSuccess = (message) => ({
   type: RESET_PASSWORD_SUCCESS,
-  payload: message
+  payload: message,
 });
 
 const resetPasswordFailure = (error) => ({
   type: RESET_PASSWORD_FAILURE,
-  payload: error
+  payload: error,
 });
 
-// Thunk action to reset the password
-export const studentResetPassword = (studentId, password) => async (dispatch) => {
-  dispatch(resetPasswordRequest());
+export const studentResetPassword =
+  (studentId, password) => async (dispatch) => {
+    dispatch(resetPasswordRequest());
 
-  try {
-    const response = await axios.post(`/student/reset-password/${studentId}`, { password });
+    try {
+      const { data } = await axios.post(
+        `/student/reset-password/${studentId}`,
+        { password },
+        {
+          withCredentials: true,
+        }
+      );
 
-    dispatch(resetPasswordSuccess(response.data.message));
-  } catch (error) {
-    dispatch(resetPasswordFailure(error.response.data.error));
-    throw error;
-  }
-};
+      dispatch(
+        resetPasswordSuccess(data.message)
+      );
 
-// Thunk action to reset the password
-export const employeResetPassword = (employeId, password) => async (dispatch) => {
-  dispatch(resetPasswordRequest());
+      return data;
+    } catch (error) {
+      const message = getErrorMessage(
+        error,
+        "Failed to reset password"
+      );
 
-  try {
-    const response = await axios.post(`/employe/reset-password/${employeId}`, { password });
+      dispatch(resetPasswordFailure(message));
 
-    dispatch(resetPasswordSuccess(response.data.message));
-  } catch (error) {
-    dispatch(resetPasswordFailure(error.response.data.error));
-    throw error;
-  }
-};
+      throw error;
+    }
+  };
 
-// Action creator to send forgot password link
-export const sendForgotPasswordLink = (email) => async (dispatch) => {
-  dispatch(forgotPasswordRequest());
+export const employeResetPassword =
+  (employeId, password) => async (dispatch) => {
+    dispatch(resetPasswordRequest());
 
-  try {
-      // Make API call to send forgot password link
-      await axios.post('/student/send-mail', { email });
-      // Dispatch forgot password success action
+    try {
+      const { data } = await axios.post(
+        `/employe/reset-password/${employeId}`,
+        { password },
+        {
+          withCredentials: true,
+        }
+      );
+
+      dispatch(
+        resetPasswordSuccess(data.message)
+      );
+
+      return data;
+    } catch (error) {
+      const message = getErrorMessage(
+        error,
+        "Failed to reset password"
+      );
+
+      dispatch(resetPasswordFailure(message));
+
+      throw error;
+    }
+  };
+
+/* =========================================================
+   FORGOT PASSWORD - STUDENT
+========================================================= */
+
+export const sendForgotPasswordLink =
+  (email) => async (dispatch) => {
+    dispatch(forgotPasswordRequest());
+
+    try {
+      const { data } = await axios.post(
+        "/student/send-mail",
+        { email }
+      );
+
       dispatch(forgotPasswordSuccess());
-  } catch (error) {
-      // Handle error
-      console.error('Error sending forgot password link:', error);
-      // Dispatch forgot password failure action with error message
-      dispatch(forgotPasswordFailure(error.response.data.error));
-  }
-};
 
-// Action creator to send forgot password link
-export const sendForgotPasswordLinkEm = (email) => async (dispatch) => {
-  dispatch(forgotPasswordRequest());
+      return data;
+    } catch (error) {
+      const message = getErrorMessage(
+        error,
+        "Failed to send reset link"
+      );
 
-  try {
-      // Make API call to send forgot password link
-      await axios.post('/employe/send-mail', { email });
-      // Dispatch forgot password success action
+      dispatch(
+        forgotPasswordFailure(message)
+      );
+
+      throw error;
+    }
+  };
+
+/* =========================================================
+   FORGOT PASSWORD - EMPLOYER
+========================================================= */
+
+export const sendForgotPasswordLinkEm =
+  (email) => async (dispatch) => {
+    dispatch(forgotPasswordRequest());
+
+    try {
+      const { data } = await axios.post(
+        "/employe/send-mail",
+        { email }
+      );
+
       dispatch(forgotPasswordSuccess());
-  } catch (error) {
-      // Handle error
-      console.error('Error sending forgot password link:', error);
-      // Dispatch forgot password failure action with error message
-      dispatch(forgotPasswordFailure(error.response.data.error));
-  }
-};
+
+      return data;
+    } catch (error) {
+      const message = getErrorMessage(
+        error,
+        "Failed to send reset link"
+      );
+
+      dispatch(
+        forgotPasswordFailure(message)
+      );
+
+      throw error;
+    }
+  };

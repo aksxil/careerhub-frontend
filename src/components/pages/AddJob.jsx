@@ -1,166 +1,411 @@
-import React, { useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { asyncloaduser , addJob } from '../../store/userActions';
+import React, { useEffect, useState } from "react";
+import { useDispatch } from "react-redux";
+import { asyncloaduser, addJob } from "../../store/userActions";
 
-const AddInternship = ({ onClose }) => {
+const AddJob = ({ onClose }) => {
   const dispatch = useDispatch();
-  const user = useSelector((state) => state.user);
+
+  const [formData, setFormData] = useState({
+    designation: "",
+    profile: "",
+    organization: "",
+    location: "",
+    remoteOrOffice: "",
+    startDate: "",
+    endDate: "",
+    description: "",
+    type: "Job",
+  });
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    // Fetch user details when the component mounts
     dispatch(asyncloaduser());
   }, [dispatch]);
 
-  const [formData, setFormData] = useState({
-    designation: '',
-    profile: '',
-    organization: '',
-    location: '',
-    remoteOrOffice: '',
-    startDate: '',
-    endDate: '',
-    description: '',
-    type:'Job'
-  });
-
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Handle form submission, e.g., dispatching an action to add the internship
-    dispatch(addJob(formData))
-    console.log('Form submitted:', formData);
-    onClose();
+
+    if (
+      !formData.designation ||
+      !formData.profile ||
+      !formData.organization ||
+      !formData.location ||
+      !formData.remoteOrOffice ||
+      !formData.startDate ||
+      !formData.endDate ||
+      !formData.description
+    ) {
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+
+      await dispatch(addJob(formData));
+
+      onClose();
+    } catch (error) {
+      console.error("Failed to add job:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
-    <div className="w-[70%]  m-auto p-6 bg-white rounded-md shadow-md">
-      <h2 className="text-lg font-semibold mb-4">Add Job</h2>
-      <form onSubmit={handleSubmit}>
-      <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700">Designation</label>
-          <input
-            type="text"
-            name="designation"
-            value={formData.designation}
-            onChange={handleChange}
-            className="mt-1 p-2 w-full border border-gray-300 rounded-md"
-            placeholder="Enter designation"
-          />
-        </div>
-       <div className='flex gap-20'>
-       <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700">Profile</label>
-          <input
-            type="text"
-            name="profile"
-            value={formData.profile}
-            onChange={handleChange}
-            className="mt-1 p-2 w-full border border-gray-300 rounded-md"
-            placeholder="Enter profile"
-          />
-        </div>
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700">Organization</label>
-          <input
-            type="text"
-            name="organization"
-            value={formData.organization}
-            onChange={handleChange}
-            className="mt-1 p-2 w-full border border-gray-300 rounded-md"
-            placeholder="Enter organization"
-          />
-        </div>
-       </div>
-       <div className='flex gap-20'>
-       <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700">Location</label>
-          <input
-            type="text"
-            name="location"
-            value={formData.location}
-            onChange={handleChange}
-            className="mt-1 p-2 w-full border border-gray-300 rounded-md"
-            placeholder="Enter location"
-          />
-        </div>
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700">Remote or In Office</label>
-          <div>
-            <label className="inline-flex items-center">
-              <input
-                type="radio"
-                name="remoteOrOffice"
-                value="Remote"
-                checked={formData.remoteOrOffice === 'Remote'}
-                onChange={handleChange}
-                className="form-radio"
-              />
-              <span className="ml-2">Remote</span>
-            </label>
-            <label className="inline-flex items-center ml-6">
-              <input
-                type="radio"
-                name="remoteOrOffice"
-                value="In Office"
-                checked={formData.remoteOrOffice === 'In Office'}
-                onChange={handleChange}
-                className="form-radio"
-              />
-              <span className="ml-2">In Office</span>
-            </label>
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+      <div className="relative w-full max-w-3xl max-h-[92vh] overflow-y-auto rounded-3xl bg-white shadow-2xl">
+
+        {/* HEADER */}
+        <div className="sticky top-0 z-10 border-b border-gray-100 bg-white/95 backdrop-blur-md px-6 sm:px-8 py-5 rounded-t-3xl">
+          <div className="flex items-start justify-between gap-4">
+
+            <div className="flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-100">
+                <i className="ri-briefcase-4-line text-2xl text-indigo-600"></i>
+              </div>
+
+              <div>
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
+                  Add Job Experience
+                </h2>
+
+                <p className="mt-1 text-sm text-gray-500">
+                  Add your professional experience to your profile.
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-500 transition hover:bg-red-50 hover:text-red-500"
+              aria-label="Close"
+            >
+              <i className="ri-close-line text-xl"></i>
+            </button>
+
           </div>
         </div>
-       </div>
-       <div className='flex gap-20'>
-       <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700">Start Date</label>
-          <input
-            type="text"
-            name="startDate"
-            value={formData.startDate}
-            onChange={handleChange}
-            className="mt-1 p-2 w-full border border-gray-300 rounded-md"
-            placeholder="Enter start date"
-          />
-        </div>
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700">End Date</label>
-          <input
-            type="text"
-            name="endDate"
-            value={formData.endDate}
-            onChange={handleChange}
-            className="mt-1 p-2 w-full border border-gray-300 rounded-md"
-            placeholder="Enter end date"
-          />
-        </div>
-       </div>
-       
-        
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700">Description</label>
-          <textarea
-            name="description"
-            value={formData.description}
-            onChange={handleChange}
-            rows="1"
-            className="mt-1 p-2 w-full border border-gray-300 rounded-md"
-            placeholder="Enter description"
-          ></textarea>
-        </div>
-        <button type="submit" className="bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 mr-2">
-          Submit
-        </button>
-        <button type="button" onClick={onClose} className="bg-gray-400 text-white py-2 px-4 rounded-md hover:bg-gray-500">
-          Cancel
-        </button>
-      </form>
+
+        {/* FORM */}
+        <form onSubmit={handleSubmit} className="px-6 sm:px-8 py-7">
+
+          {/* SECTION HEADER */}
+          <div className="mb-6">
+            <h3 className="text-base font-bold text-gray-900">
+              Professional Details
+            </h3>
+
+            <p className="mt-1 text-sm text-gray-500">
+              Tell recruiters about your work experience.
+            </p>
+          </div>
+
+          {/* DESIGNATION */}
+          <div>
+            <label className="mb-2 block text-sm font-semibold text-gray-700">
+              Designation
+              <span className="ml-1 text-red-500">*</span>
+            </label>
+
+            <div className="relative">
+              <i className="ri-user-star-line absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+
+              <input
+                type="text"
+                name="designation"
+                value={formData.designation}
+                onChange={handleChange}
+                placeholder="e.g. Software Engineer"
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 py-3 pl-11 pr-4 text-sm text-gray-800 outline-none transition placeholder:text-gray-400 focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-100"
+              />
+            </div>
+          </div>
+
+          {/* PROFILE + ORGANIZATION */}
+          <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-5">
+
+            {/* PROFILE */}
+            <div>
+              <label className="mb-2 block text-sm font-semibold text-gray-700">
+                Profile
+                <span className="ml-1 text-red-500">*</span>
+              </label>
+
+              <div className="relative">
+                <i className="ri-briefcase-line absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+
+                <input
+                  type="text"
+                  name="profile"
+                  value={formData.profile}
+                  onChange={handleChange}
+                  placeholder="e.g. Frontend Developer"
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 py-3 pl-11 pr-4 text-sm text-gray-800 outline-none transition placeholder:text-gray-400 focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-100"
+                />
+              </div>
+            </div>
+
+            {/* ORGANIZATION */}
+            <div>
+              <label className="mb-2 block text-sm font-semibold text-gray-700">
+                Organization
+                <span className="ml-1 text-red-500">*</span>
+              </label>
+
+              <div className="relative">
+                <i className="ri-building-4-line absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+
+                <input
+                  type="text"
+                  name="organization"
+                  value={formData.organization}
+                  onChange={handleChange}
+                  placeholder="e.g. Microsoft"
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 py-3 pl-11 pr-4 text-sm text-gray-800 outline-none transition placeholder:text-gray-400 focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-100"
+                />
+              </div>
+            </div>
+
+          </div>
+
+          {/* LOCATION */}
+          <div className="mt-5">
+            <label className="mb-2 block text-sm font-semibold text-gray-700">
+              Location
+              <span className="ml-1 text-red-500">*</span>
+            </label>
+
+            <div className="relative">
+              <i className="ri-map-pin-line absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+
+              <input
+                type="text"
+                name="location"
+                value={formData.location}
+                onChange={handleChange}
+                placeholder="e.g. Bangalore, India"
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 py-3 pl-11 pr-4 text-sm text-gray-800 outline-none transition placeholder:text-gray-400 focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-100"
+              />
+            </div>
+          </div>
+
+          {/* WORK MODE */}
+          <div className="mt-6">
+            <label className="mb-3 block text-sm font-semibold text-gray-700">
+              Work Mode
+              <span className="ml-1 text-red-500">*</span>
+            </label>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+              {/* REMOTE */}
+              <label
+                className={`relative flex cursor-pointer items-center gap-4 rounded-2xl border p-4 transition ${
+                  formData.remoteOrOffice === "Remote"
+                    ? "border-indigo-500 bg-indigo-50 ring-2 ring-indigo-100"
+                    : "border-gray-200 bg-gray-50 hover:border-indigo-300"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="remoteOrOffice"
+                  value="Remote"
+                  checked={formData.remoteOrOffice === "Remote"}
+                  onChange={handleChange}
+                  className="sr-only"
+                />
+
+                <div
+                  className={`flex h-11 w-11 items-center justify-center rounded-xl ${
+                    formData.remoteOrOffice === "Remote"
+                      ? "bg-indigo-600 text-white"
+                      : "bg-white text-gray-500"
+                  }`}
+                >
+                  <i className="ri-home-office-line text-xl"></i>
+                </div>
+
+                <div>
+                  <p className="font-semibold text-gray-800">
+                    Remote
+                  </p>
+
+                  <p className="text-xs text-gray-500">
+                    Work remotely
+                  </p>
+                </div>
+
+                {formData.remoteOrOffice === "Remote" && (
+                  <i className="ri-checkbox-circle-fill absolute right-4 top-4 text-xl text-indigo-600"></i>
+                )}
+              </label>
+
+              {/* IN OFFICE */}
+              <label
+                className={`relative flex cursor-pointer items-center gap-4 rounded-2xl border p-4 transition ${
+                  formData.remoteOrOffice === "In Office"
+                    ? "border-indigo-500 bg-indigo-50 ring-2 ring-indigo-100"
+                    : "border-gray-200 bg-gray-50 hover:border-indigo-300"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="remoteOrOffice"
+                  value="In Office"
+                  checked={formData.remoteOrOffice === "In Office"}
+                  onChange={handleChange}
+                  className="sr-only"
+                />
+
+                <div
+                  className={`flex h-11 w-11 items-center justify-center rounded-xl ${
+                    formData.remoteOrOffice === "In Office"
+                      ? "bg-indigo-600 text-white"
+                      : "bg-white text-gray-500"
+                  }`}
+                >
+                  <i className="ri-building-line text-xl"></i>
+                </div>
+
+                <div>
+                  <p className="font-semibold text-gray-800">
+                    In Office
+                  </p>
+
+                  <p className="text-xs text-gray-500">
+                    Work from office
+                  </p>
+                </div>
+
+                {formData.remoteOrOffice === "In Office" && (
+                  <i className="ri-checkbox-circle-fill absolute right-4 top-4 text-xl text-indigo-600"></i>
+                )}
+              </label>
+
+            </div>
+          </div>
+
+          {/* DURATION */}
+          <div className="mt-6">
+            <label className="mb-3 block text-sm font-semibold text-gray-700">
+              Employment Duration
+            </label>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+              {/* START */}
+              <div>
+                <label className="mb-2 block text-xs font-medium text-gray-500">
+                  Start Date
+                  <span className="ml-1 text-red-500">*</span>
+                </label>
+
+                <div className="relative">
+                  <i className="ri-calendar-event-line absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+
+                  <input
+                    type="text"
+                    name="startDate"
+                    value={formData.startDate}
+                    onChange={handleChange}
+                    placeholder="e.g. Jan 2023"
+                    className="w-full rounded-xl border border-gray-200 bg-gray-50 py-3 pl-11 pr-4 text-sm text-gray-800 outline-none transition placeholder:text-gray-400 focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-100"
+                  />
+                </div>
+              </div>
+
+              {/* END */}
+              <div>
+                <label className="mb-2 block text-xs font-medium text-gray-500">
+                  End Date
+                  <span className="ml-1 text-red-500">*</span>
+                </label>
+
+                <div className="relative">
+                  <i className="ri-calendar-check-line absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+
+                  <input
+                    type="text"
+                    name="endDate"
+                    value={formData.endDate}
+                    onChange={handleChange}
+                    placeholder="e.g. Dec 2024"
+                    className="w-full rounded-xl border border-gray-200 bg-gray-50 py-3 pl-11 pr-4 text-sm text-gray-800 outline-none transition placeholder:text-gray-400 focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-100"
+                  />
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          {/* DESCRIPTION */}
+          <div className="mt-6">
+            <label className="mb-2 block text-sm font-semibold text-gray-700">
+              Description
+              <span className="ml-1 text-red-500">*</span>
+            </label>
+
+            <textarea
+              name="description"
+              value={formData.description}
+              onChange={handleChange}
+              rows={5}
+              placeholder="Describe your responsibilities, projects, technologies used and achievements..."
+              className="w-full resize-none rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-800 outline-none transition placeholder:text-gray-400 focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-100"
+            />
+
+            <p className="mt-2 text-xs text-gray-400">
+              Tip: Mention your responsibilities, technologies and key
+              achievements.
+            </p>
+          </div>
+
+          {/* ACTIONS */}
+          <div className="mt-8 flex flex-col-reverse sm:flex-row sm:justify-end gap-3 border-t border-gray-100 pt-6">
+
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-full sm:w-auto rounded-xl border border-gray-200 bg-white px-6 py-3 text-sm font-semibold text-gray-600 transition hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full sm:w-auto rounded-xl bg-indigo-600 px-7 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-200 transition hover:bg-indigo-700 hover:shadow-xl disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isSubmitting ? (
+                <span className="flex items-center justify-center gap-2">
+                  <i className="ri-loader-4-line animate-spin text-lg"></i>
+                  Saving...
+                </span>
+              ) : (
+                <span className="flex items-center justify-center gap-2">
+                  <i className="ri-add-line text-lg"></i>
+                  Add Job
+                </span>
+              )}
+            </button>
+
+          </div>
+
+        </form>
+      </div>
     </div>
   );
 };
 
-export default AddInternship;
+export default AddJob;
